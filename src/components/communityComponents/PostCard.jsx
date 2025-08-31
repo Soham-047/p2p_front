@@ -273,7 +273,7 @@ function formatTimeAgo(dateString) {
 
 export default function PostCard({ post }) {
   // Destructure for easier access
-  const { author, content, title, created_at, slug } = post;
+  const { author, content, title, created_at, slug , tag_names} = post;
 
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
@@ -296,7 +296,11 @@ export default function PostCard({ post }) {
         ]);
         const likesData = await likesRes.json();
         const commentsData = await commentsRes.json();
-        if (likesRes.ok) setLikeCount(likesData.count);
+        if (likesRes.ok) {
+          setLikeCount(likesData.count)
+        setIsLiked(likesData.is_liked);
+        };
+        
         if (commentsRes.ok) setCommentCount(commentsData.count);
       } catch (error) {
         console.error("Failed to fetch counts:", error);
@@ -379,10 +383,27 @@ export default function PostCard({ post }) {
         </div>
       </div>
       
-      {/* --- POST CONTENT --- */}
-      <div>
+      {/* --- POST CONTENT  & TAGS --- */}
+      {/* <div>
         <h3 className="font-semibold text-lg mb-1">{title}</h3>
         <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+      </div> */}
+
+        <div>
+        <h3 className="font-semibold text-lg mb-1">{title}</h3>
+        <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+
+        <div className="mt-3">
+          {/* ✅ 2. UPDATED: Loop over 'tag_names' to display the tags */}
+          {tag_names && tag_names.map((tag, index) => (
+            <span 
+              key={index} 
+              className="text-sm font-medium text-blue-600 mr-3 cursor-pointer hover:underline"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* --- NEW ACTIONS BAR UI --- */}
