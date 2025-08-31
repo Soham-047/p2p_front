@@ -20,9 +20,9 @@ export default function ChatBox() {
   };
 
   return (
-    <Card className="flex flex-col flex-1 h-full border-0 ">
-      <CardContent className="flex-1 overflow-y-auto p-0 space-y-3">
-        <ChatHeader/>
+    <Card className="flex flex-col flex-1 h-full border-0 pb-4 md:p-0 pt-20 md:pt-0">
+      <CardContent className="flex-1 overflow-y-auto p-0 space-y-1 ">
+        <ChatHeader />
         {messages.map((msg) => (
           <MessageBubble key={msg.id} {...msg}  />
         ))}

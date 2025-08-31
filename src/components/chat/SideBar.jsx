@@ -12,19 +12,18 @@ const conversations = [
   { id: 5, name: "Ritik Kumar Sen", message: "Thanks for the help yesterday!", time: "July 13", avatar: "/avatars/3.png", unread: false },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onSelectChat }) {
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedChat, setSelectedChat] = useState(2); // default selected
+  const [selectedChat, setSelectedChat] = useState(2);
 
   return (
-    <Card className="w-[500px] border-0 flex flex-col">
+    <Card className="w-full md:w-[500px] border-0 flex flex-col pt-20 md:pt-0">
       {/* Search */}
       <div className="p-4">
-      <Input
-  placeholder="Search your conversations"
-  className="rounded-full hover:border-transparent focus-visible:ring-1 "
-/>
-
+        <Input
+          placeholder="Search your conversations"
+          className="rounded-full hover:border-transparent focus-visible:ring-1"
+        />
       </div>
 
       {/* Tabs */}
@@ -50,7 +49,10 @@ export default function Sidebar() {
           {conversations.map((c) => (
             <div
               key={c.id}
-              onClick={() => setSelectedChat(c.id)}
+              onClick={() => {
+                setSelectedChat(c.id);
+                if (onSelectChat) onSelectChat(); // mobile: switch to ChatBox
+              }}
               className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition rounded-lg ${
                 selectedChat === c.id ? "bg-indigo-50" : "hover:bg-gray-100"
               }`}
@@ -68,7 +70,6 @@ export default function Sidebar() {
                 <p className="text-sm text-gray-500 truncate">{c.message}</p>
               </div>
 
-              {/* Unread Badge */}
               {c.unread && (
                 <span className="ml-2 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">
                   {c.unreadCount || ""}
@@ -81,3 +82,4 @@ export default function Sidebar() {
     </Card>
   );
 }
+

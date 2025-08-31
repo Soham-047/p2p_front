@@ -4,7 +4,7 @@ export default function MessageBubble({ text, sender, time }) {
   return (
     <div
       className={cn(
-        "flex flex-col max-w-xs",
+        "flex flex-col max-w-xs pt-4",
         sender === "me" ? "ml-auto items-end px-5" : "mr-auto items-start px-5"
       )}
     >
