@@ -54,7 +54,7 @@ export default function AuthForm() {
         }
   
        // Store in cookie for 7 days
-document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Strict`;
+document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  SameSite=Strict`;
 
         window.location.href = "/home";
       }
