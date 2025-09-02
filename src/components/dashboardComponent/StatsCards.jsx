@@ -7,11 +7,7 @@ import { useUser } from "@/hooks/useUser"   // 👈 your custom hook
 export default function StatsSection() {
   const { user } = useUser()   // 👈 get user from context
 
-  const stats = [
-    { icon: <MessageSquare className="h-6 w-6 text-purple-700" />, value: 2, label: "New Conversations" },
-    { icon: <FileText className="h-6 w-6 text-purple-700" />, value: 15, label: "New Posts" },
-    { icon: <GitMerge className="h-6 w-6 text-purple-700" />, value: 30, label: "Connection Requests" },
-  ]
+  
 
   return (
     <div className="space-y-6">
@@ -21,7 +17,7 @@ export default function StatsSection() {
           <h1 className="text-2xl font-semibold">
             Hello,{" "}
             <span className="text-purple-700 font-bold">
-              {user?.username || "Guest"} {/* 👈 dynamic username */}
+              {user?.username  } {/* 👈 dynamic username */}
             </span>
           </h1>
           <p className="text-gray-500 text-sm">
@@ -35,7 +31,7 @@ export default function StatsSection() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, i) => (
           <Card
@@ -47,7 +43,7 @@ export default function StatsSection() {
             <span className="text-gray-500 text-sm">{stat.label}</span>
           </Card>
         ))}
-      </div>
+      </div> */}
     </div>
   )
 }

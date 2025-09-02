@@ -2,19 +2,52 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const conversations = [
-  { id: 1, name: "Pinak Halder", message: "Thanks for the help yesterday!", time: "3m", avatar: "/avatars/1.png", unread: true, unreadCount: 3 },
-  { id: 2, name: "Soham Raj Chopra", message: "Hey, how’s the project going?", time: "2m", avatar: "/avatars/2.png", unread: false },
-  { id: 3, name: "Ritik Kumar Sen", message: "Thanks for the help yesterday!", time: "2 days", avatar: "/avatars/3.png", unread: false },
-  { id: 4, name: "Roshan Singh", message: "Hey, Mahendra how are you doing. Let’s catch up today", time: "1h", avatar: "/avatars/4.png", unread: false },
-  { id: 5, name: "Ritik Kumar Sen", message: "Thanks for the help yesterday!", time: "July 13", avatar: "/avatars/3.png", unread: false },
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Sidebar({ onSelectChat }) {
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedChat, setSelectedChat] = useState(2);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [conversations, setConversations] = useState([]);
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  // ✅ Fetch conversations
+  const fetchConversations = async () => {
+    try {
+      const token = getCookie("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/chats/recent/`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to fetch chats:", res.status);
+        return;
+      }
+
+      const data = await res.json();
+      setConversations(data);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
+  };
+
+  // Fetch once on mount + auto-refresh every 10s
+  useEffect(() => {
+    fetchConversations();
+    const interval = setInterval(fetchConversations, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="w-full md:w-[500px] border-0 flex flex-col pt-20 md:pt-0">
@@ -46,40 +79,45 @@ export default function Sidebar({ onSelectChat }) {
       {/* Conversation List */}
       <ScrollArea className="flex-1">
         <div className="space-y-1">
-          {conversations.map((c) => (
-            <div
+          {conversations.map((c) => {
+            const displayName = c.other_user.full_name || c.other_user.username;
+            return (
+              <div
               key={c.id}
               onClick={() => {
                 setSelectedChat(c.id);
-                if (onSelectChat) onSelectChat(); // mobile: switch to ChatBox
+                if (onSelectChat) onSelectChat(c.other_user.username); // ✅ Pass username
               }}
               className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition rounded-lg ${
                 selectedChat === c.id ? "bg-indigo-50" : "hover:bg-gray-100"
               }`}
             >
-              <Avatar>
-                <AvatarImage src={c.avatar} />
-                <AvatarFallback>{c.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+                <Avatar>
+                  <AvatarImage src="/avatars/default.png" />
+                  <AvatarFallback>
+                    {displayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center">
-                  <p className="font-medium truncate">{c.name}</p>
-                  <span className="text-xs text-gray-400">{c.time}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium truncate">{displayName}</p>
+                    <span className="text-xs text-gray-400">
+                      {new Date(c.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 truncate">
+                    {c.last_message_preview}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-500 truncate">{c.message}</p>
               </div>
-
-              {c.unread && (
-                <span className="ml-2 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">
-                  {c.unreadCount || ""}
-                </span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
     </Card>
   );
 }
-
