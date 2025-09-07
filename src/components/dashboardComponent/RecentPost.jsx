@@ -101,7 +101,7 @@ export default function RecentPosts() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/posts/`, {
+        const response = await fetch(`${API_BASE_URL}/api/posts-app/posts/`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
 

@@ -21,12 +21,13 @@ export default function AuthForm() {
   
     try {
       if (mode === "signup") {
-        const res = await fetch(`${API_BASE_URL}/api/auth/register/`, {
+        const res = await fetch(`${API_BASE_URL}/api/users-app/auth/register/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             college_email: collegeEmail,
             batch: batch,
+            is_current_student: true,
           }),
         });
   
@@ -39,7 +40,7 @@ export default function AuthForm() {
         setMode("signin");
   
       } else {
-        const res = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+        const res = await fetch(`${API_BASE_URL}/api/users-app/auth/login/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
