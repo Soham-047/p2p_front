@@ -1320,22 +1320,27 @@ function formatTimeAgo(dateString) {
   return Math.floor(seconds) + " seconds ago";
 }
 
-function Comment({ comment, onReply, depth = 0, authToken }) {
+const getInitials = (name = "") => {
+    return name
+        .split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || 'U';
+};
+
+function Comment({ comment, onReply, depth = 0, authToken, currentUserAvatar }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
 
-  const handleReplyClick = () => {
-    setIsReplying(!isReplying);
-  };
+  const handleReplyClick = () => setIsReplying(!isReplying);
 
   const handleReplySubmit = (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    if (onReply) {
-      onReply(comment.slug, replyText);
-    }
+    onReply?.(comment.slug, replyText);
     setReplyText("");
     setIsReplying(false);
   };
@@ -1343,13 +1348,10 @@ function Comment({ comment, onReply, depth = 0, authToken }) {
   const fetchReplies = async () => {
     if (!authToken || !comment.slug) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/${comment.slug}/replies/`, {
+      const response = await fetch(`${API_BASE_URL}/api/posts-app/comments/${comment.slug}/replies/`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (response.ok) {
-        const data = await response.json();
-        setReplies(data);
-      }
+      if (response.ok) setReplies(await response.json());
     } catch (error) {
       console.error("Failed to fetch replies:", error);
     }
@@ -1358,9 +1360,7 @@ function Comment({ comment, onReply, depth = 0, authToken }) {
   const toggleReplies = () => {
     const newShowState = !showReplies;
     setShowReplies(newShowState);
-    if (newShowState && replies.length === 0) {
-      fetchReplies();
-    }
+    if (newShowState && replies.length === 0) fetchReplies();
   };
 
   return (
@@ -1371,67 +1371,39 @@ function Comment({ comment, onReply, depth = 0, authToken }) {
             <div className="flex gap-3">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={comment.author?.avatar_url} />
-                <AvatarFallback>
-                  {comment.author?.username?.[0]?.toUpperCase() || 'U'}
-                </AvatarFallback>
+                <AvatarFallback>{getInitials(comment.author?.full_name || comment.author?.username)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-900">
-                    {comment.author?.username || comment.author || 'User'}
-                  </span>
+                  <span className="text-sm font-semibold text-gray-900">{comment.author?.full_name || comment.author?.username || 'User'}</span>
                   <span className="text-xs text-gray-500">• {formatTimeAgo(comment.created_at)}</span>
                 </div>
-                <div className="text-xs text-gray-600">SDE at Salesforce</div>
+                {comment.author?.headline && <div className="text-xs text-gray-600">{comment.author.headline}</div>}
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal size={16} className="text-gray-600" />
-            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal size={16} className="text-gray-600" /></Button>
           </div>
-          <div className="text-sm text-gray-800 font-medium leading-tight mb-3 pl-12">
-            {comment.content}
-          </div>
+          <div className="text-sm text-gray-800 font-medium leading-tight mb-3 pl-12">{comment.content}</div>
           <div className="flex items-center gap-4 pl-12">
-            <Button variant="ghost" size="sm" className="text-gray-600 text-xs p-0 h-auto hover:text-gray-900">
-              Like
-            </Button>
-            <Button variant="ghost" size="sm" className="text-gray-600 text-xs p-0 h-auto hover:text-gray-900" onClick={handleReplyClick}>
-              Reply
-            </Button>
-            {/* ✅ CHANGE: Button ab hamesha dikhega. 'reply_count' ki zaroorat nahi hai. */}
-            <Button variant="link" size="sm" className="text-blue-600 text-xs p-0 h-auto" onClick={toggleReplies}>
-              {showReplies ? 'Hide Replies' : 'View Replies'}
-            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-600 text-xs p-0 h-auto hover:text-gray-900">Like</Button>
+            <Button variant="ghost" size="sm" className="text-gray-600 text-xs p-0 h-auto hover:text-gray-900" onClick={handleReplyClick}>Reply</Button>
+            <Button variant="link" size="sm" className="text-blue-600 text-xs p-0 h-auto" onClick={toggleReplies}>{showReplies ? 'Hide Replies' : 'View Replies'}</Button>
           </div>
         </div>
         {isReplying && (
           <div className="flex gap-3 items-start mt-2">
             <Avatar className="h-9 w-9">
-              <AvatarImage src="" />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarImage src={currentUserAvatar} />
+              <AvatarFallback>ME</AvatarFallback>
             </Avatar>
             <form onSubmit={handleReplySubmit} className="flex-1">
-              <Input
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className="h-9 rounded-full bg-gray-100"
-              />
+              <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Write a reply..." className="h-9 rounded-full bg-gray-100" />
             </form>
           </div>
         )}
         {showReplies && replies.length > 0 && (
           <div className="space-y-4 mt-4">
-            {replies.map(reply => (
-              <Comment 
-                key={reply.id} 
-                comment={reply} 
-                onReply={onReply} 
-                depth={depth + 1}
-                authToken={authToken}
-              />
-            ))}
+            {replies.map(reply => <Comment key={reply.id} comment={reply} onReply={onReply} depth={depth + 1} authToken={authToken} currentUserAvatar={currentUserAvatar} />)}
           </div>
         )}
       </div>
@@ -1441,7 +1413,6 @@ function Comment({ comment, onReply, depth = 0, authToken }) {
 
 export default function PostCard({ post }) {
   const { author, content, title, created_at, slug, tag_names } = post;
-
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -1450,65 +1421,75 @@ export default function PostCard({ post }) {
   const [comments, setComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
   
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserAvatar, setCurrentUserAvatar] = useState('');
   const authToken = getCookie('token');
 
   useEffect(() => {
+    const fetchCurrentUserData = async () => {
+        if (!authToken) return;
+        try {
+            const [profileRes, avatarRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/users-app/profile/me/`, { headers: { Authorization: `Bearer ${authToken}` } }),
+                fetch(`${API_BASE_URL}/api/users-app/profile/me/avatar/`, { headers: { Authorization: `Bearer ${authToken}` } })
+            ]);
+            if (profileRes.ok) setCurrentUser(await profileRes.json());
+            if (avatarRes.ok) {
+                const blob = await avatarRes.blob();
+                if (blob.size > 0) setCurrentUserAvatar(URL.createObjectURL(blob));
+            }
+        } catch (error) {
+            console.error("Failed to fetch current user data:", error);
+        }
+    };
+    
     const fetchInitialData = async () => {
       if (!authToken || !slug) return;
       try {
         const [likesRes, commentsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/${slug}/like-count/`, { headers: { Authorization: `Bearer ${authToken}` } }),
-          fetch(`${API_BASE_URL}/api/count-comments/${slug}/`, { headers: { Authorization: `Bearer ${authToken}` } }),
+          fetch(`${API_BASE_URL}/api/posts-app/${slug}/like-count/`, { headers: { Authorization: `Bearer ${authToken}` } }),
+          fetch(`${API_BASE_URL}/api/posts-app/count-comments/${slug}/`, { headers: { Authorization: `Bearer ${authToken}` } }),
         ]);
-
         if (likesRes.ok) {
-          const likesData = await likesRes.json();
-          setLikeCount(likesData.count);
-          setIsLiked(likesData.is_like);
-        } else {
-          console.error("Failed to fetch like count:", likesRes.status);
+          const d = await likesRes.json();
+          setLikeCount(d.count);
+          setIsLiked(d.is_like);
         }
-        
-        if (commentsRes.ok) {
-          const commentsData = await commentsRes.json();
-          setCommentCount(commentsData.count);
-        } else {
-          console.error("Failed to fetch comment count:", commentsRes.status);
-        }
+        if (commentsRes.ok) setCommentCount((await commentsRes.json()).count);
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
       }
     };
+
     fetchInitialData();
+    fetchCurrentUserData();
+
+    return () => {
+        if (currentUserAvatar) URL.revokeObjectURL(currentUserAvatar);
+    }
   }, [slug, authToken]);
 
   const handleLike = async () => {
     if (!authToken) return alert("Please log in to like posts.");
-    const originalLikeState = isLiked;
-    const originalLikeCount = likeCount;
-    setIsLiked(!originalLikeState);
-    setLikeCount(originalLikeState ? originalLikeCount - 1 : originalLikeCount + 1);
-    const endpoint = originalLikeState ? 'unlike-post' : 'like-post';
+    setIsLiked(!isLiked);
+    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/${slug}/${endpoint}/`, {
+      await fetch(`${API_BASE_URL}/api/posts-app/${slug}/${isLiked ? 'unlike-post' : 'like-post'}/`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
-      if (!response.ok) throw new Error("Failed to update like status");
     } catch (error) {
-      setIsLiked(originalLikeState);
-      setLikeCount(originalLikeCount);
-      alert("Something went wrong with the like action.");
+      setIsLiked(!isLiked);
+      setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+      alert("Like action failed.");
     }
   };
 
   const fetchComments = async () => {
     if (!authToken || !slug) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/list-comments/${slug}/`, { headers: { Authorization: `Bearer ${authToken}` } });
-      if (response.ok) {
-        setComments(await response.json());
-      }
+      const response = await fetch(`${API_BASE_URL}/api/posts-app/list-comments/${slug}/`, { headers: { Authorization: `Bearer ${authToken}` } });
+      if (response.ok) setComments(await response.json());
     } catch (error) {
       console.error("Failed to fetch comments:", error);
     }
@@ -1517,9 +1498,7 @@ export default function PostCard({ post }) {
   const handleToggleComments = () => {
     const newShowState = !showComments;
     setShowComments(newShowState);
-    if (newShowState && comments.length === 0) {
-      fetchComments();
-    }
+    if (newShowState && comments.length === 0) fetchComments();
   };
 
   const handleCommentSubmit = async (e) => {
@@ -1527,7 +1506,7 @@ export default function PostCard({ post }) {
     if (!newComment.trim()) return;
     setIsSubmittingComment(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/${slug}/comments/`, {
+      const response = await fetch(`${API_BASE_URL}/api/posts-app/${slug}/comments/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newComment }),
@@ -1536,9 +1515,7 @@ export default function PostCard({ post }) {
         setNewComment("");
         setCommentCount(prev => prev + 1);
         fetchComments();
-      } else {
-        alert("Failed to post comment.");
-      }
+      } else alert("Failed to post comment.");
     } catch (error) {
       console.error("Error submitting comment:", error);
     } finally {
@@ -1549,20 +1526,13 @@ export default function PostCard({ post }) {
   const handleReply = async (commentSlug, replyContent) => {
     if (!authToken) return alert("Please log in to reply.");
     try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/${commentSlug}/replies/`, {
+      const response = await fetch(`${API_BASE_URL}/api/posts-app/comments/${commentSlug}/replies/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: replyContent }),
       });
-      if (response.ok) {
-        // After posting a reply, refetch all comments to see the new reply count
-        // Note: this won't show the new reply itself until the user clicks 'view replies' again.
-        fetchComments();
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to post reply:", response.status, errorData);
-        alert("Failed to post reply.");
-      }
+      if (response.ok) fetchComments();
+      else alert("Failed to post reply.");
     } catch (error) {
       console.error("Error submitting reply:", error);
     }
@@ -1574,46 +1544,37 @@ export default function PostCard({ post }) {
         <div className="flex items-center">
           <Avatar className="h-12 w-12">
             <AvatarImage src={author?.avatar_url} />
-            <AvatarFallback>{author ? author[0].toUpperCase() : 'U'}</AvatarFallback>
+            <AvatarFallback>{getInitials(author?.full_name || author?.username)}</AvatarFallback>
           </Avatar>
           <div className="ml-3">
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-gray-900">{author || "Unknown User"}</p>
+              <p className="font-semibold text-gray-900">{author?.full_name || author?.username || "Unknown User"}</p>
               <span className="text-sm text-gray-500">• {formatTimeAgo(created_at)}</span>
             </div>
-            <p className="text-sm text-gray-500">Alumni • SDE at Salesforce</p>
+            {author?.headline && <p className="text-sm text-gray-500">{author.headline}</p>}
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal size={16} className="text-gray-600" />
-        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal size={16} className="text-gray-600" /></Button>
       </div>
       
       <div>
         {title && <h3 className="font-semibold text-lg mb-1">{title}</h3>}
         <p className="text-gray-800 leading-snug">{content}</p>
         <div className="mt-3">
-          {tag_names && tag_names.map((tag, index) => (
-            <span key={index} className="text-sm font-medium text-blue-600 mr-3 cursor-pointer hover:underline">
-              #{tag}
-            </span>
-          ))}
+          {tag_names?.map((tag, index) => <span key={index} className="text-sm font-medium text-blue-600 mr-3 cursor-pointer hover:underline">#{tag}</span>)}
         </div>
       </div>
 
       <div className="flex justify-between items-center border-t pt-2">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={handleLike} className={`flex items-center gap-2 p-1 text-gray-600 font-semibold ${isLiked ? 'text-red-500' : ''}`}>
-            <Heart size={20} className={isLiked ? "fill-current" : ""} />
-            <span>Like</span>
+            <Heart size={20} className={isLiked ? "fill-current" : ""} /><span>Like</span>
           </Button>
           <Button variant="ghost" size="sm" onClick={handleToggleComments} className="flex items-center gap-2 p-1 text-gray-600 font-semibold">
-            <MessageCircle size={20} />
-            <span>Comment</span>
+            <MessageCircle size={20} /><span>Comment</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-2 p-1 text-gray-600 font-semibold">
-            <Share2 size={20} />
-            <span>Share</span>
+            <Share2 size={20} /><span>Share</span>
           </Button>
         </div>
         <div className="text-sm text-gray-500">
@@ -1626,33 +1587,17 @@ export default function PostCard({ post }) {
         <div className="border-t pt-4 space-y-4">
           <div className="flex gap-3 items-start">
             <Avatar className="h-9 w-9">
-              <AvatarImage src="" />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarImage src={currentUserAvatar} />
+              <AvatarFallback>{getInitials(currentUser?.full_name || currentUser?.username)}</AvatarFallback>
             </Avatar>
             <form onSubmit={handleCommentSubmit} className="flex-1">
-              <Input
-                placeholder="Add a comment..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                disabled={isSubmittingComment}
-                className="h-9 rounded-full bg-gray-100"
-              />
+              <Input placeholder="Add a comment..." value={newComment} onChange={(e) => setNewComment(e.target.value)} disabled={isSubmittingComment} className="h-9 rounded-full bg-gray-100" />
             </form>
           </div>
-
           <div className="space-y-4">
             {comments.length > 0 ? (
-              comments.map(comment => (
-                <Comment 
-                  key={comment.id} 
-                  comment={comment} 
-                  onReply={handleReply} 
-                  authToken={authToken}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-center text-gray-500">No comments yet.</p>
-            )}
+              comments.map(comment => <Comment key={comment.id} comment={comment} onReply={handleReply} authToken={authToken} currentUserAvatar={currentUserAvatar} />)
+            ) : <p className="text-sm text-center text-gray-500">No comments yet.</p>}
           </div>
         </div>
       )}
