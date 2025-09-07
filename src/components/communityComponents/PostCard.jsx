@@ -322,7 +322,7 @@ export default function PostCard({ post }) {
         headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
       });
       if (!response.ok) throw new Error("Failed to update like status");
-    } catch (error) {
+    } catch  {
       setIsLiked(originalLikeState);
       setLikeCount(originalLikeCount);
       alert("Something went wrong. Please try again.");

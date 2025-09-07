@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ChatHeader({ onBack }) {
   return (
-    <div className="flex items-center justify-between p-4 border-b bg-white sticky top-0 z-10">
+    <div className="flex items-center justify-between p-4  bg-white sticky top-0 z-10">
       {/* Left section: back button + user info */}
       <div className="flex items-center gap-3">
         {onBack && (
@@ -33,7 +33,7 @@ export default function ChatHeader({ onBack }) {
         </div>
       </div>
 
-      {/* Right section: action buttons */}
+      {/* Right section: action buttons
       <div className="flex items-center gap-1">
         <Button size="icon" variant="ghost" className="rounded-full hover:bg-gray-100">
           <MessageSquare className="w-4 h-4" />
@@ -47,7 +47,7 @@ export default function ChatHeader({ onBack }) {
         <Button size="icon" variant="ghost" className="rounded-full hover:bg-gray-100">
           <BarChart className="w-4 h-4" />
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }
