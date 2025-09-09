@@ -295,7 +295,7 @@ export default function Sidebar() {
       <div className="md:hidden h-16"></div>
 
       {/* ✅ Desktop Sidebar */}
-      <aside className="hidden md:flex w-[280px] bg-white flex-col border-r shadow-sm">
+      <aside className="hidden md:flex w-[350px] bg-white flex-col border-r shadow-sm">
         <div className="h-16 flex items-center px-6 border-b">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">

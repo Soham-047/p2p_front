@@ -1,10 +1,70 @@
-// import { useState } from "react";
+
+// import { useEffect, useState } from "react";
 // import Sidebar from "../components/chat/SideBar";
 // import ChatBox from "../components/chat/ChatBox";
+// import EmptyConversations from "../components/chat/EmptyConversations";
+// import SearchConversations from "../components/chat/SearchConversations";
 
 // export default function ChatLayout() {
 //   const [showChat, setShowChat] = useState(false);
 //   const [activeUser, setActiveUser] = useState(null);
+//   const [conversations, setConversations] = useState(null);
+//   const [showSearch, setShowSearch] = useState(false);
+//   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+//   // ✅ Fetch conversations
+//   useEffect(() => {
+//     const fetchConversations = async () => {
+//       try {
+//         const value = `; ${document.cookie}`;
+//         const parts = value.split(`; token=`);
+//         const token =
+//           parts.length === 2 ? parts.pop().split(";").shift() : null;
+
+//         if (!token) return;
+
+//         const res = await fetch(`${API_BASE_URL}/api/messages-app/chats/recent/`, {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+
+//         if (!res.ok) {
+//           console.error("Failed to fetch chats:", res.status);
+//           return;
+//         }
+
+//         const data = await res.json();
+//         setConversations(data);
+//       } catch (err) {
+//         console.error("Error fetching conversations:", err);
+//       }
+//     };
+
+//     fetchConversations();
+//   }, []);
+
+//   // ✅ Show Empty screen (only if no active chat and not searching)
+//   if (!showChat && conversations && conversations.length === 0 && !showSearch) {
+//     return <EmptyConversations onSearch={() => setShowSearch(true)} />;
+//   }
+
+//   // ✅ Show Search screen
+//   if (showSearch) {
+//     return (
+//       <SearchConversations
+//         onSelectUser={(user) => {
+//           setActiveUser({
+//             username: user.username,
+//             fullName:  user.full_name,
+//           });
+//           setShowSearch(false);
+//           setShowChat(true);
+//         }}
+//       />
+//     );
+//   }
 
 //   return (
 //     <div className="flex flex-1 h-screen bg-white shadow-lg rounded-lg md:p-4 overflow-hidden">
@@ -12,15 +72,24 @@
 //       <div className="hidden md:flex w-full">
 //         <Sidebar
 //           onSelectChat={(username) => {
-//             setActiveUser(username);
+//             // wrap username as object
+//             setActiveUser({ username, fullName: username });
 //             setShowChat(true);
 //           }}
 //         />
-//         {showChat ? (
-//           <ChatBox username={activeUser} onBack={() => setShowChat(false)} />
+//         {showChat && activeUser ? (
+//           <ChatBox
+//             username={activeUser.username}
+//             fullName={activeUser.fullName}
+//             onBack={() => setShowChat(false)}
+//           />
 //         ) : (
-//           <div className="flex-1 flex items-center justify-center">
-//             <img src="/placeholder.png" alt="Welcome" className="w-80" />
+//           <div className="flex-1 flex flex-col items-center justify-center">
+//             <h2 className="text-4xl font-semibold mb-4">
+//           Initiate a great conversation just <br /> before asking for referrals
+//         </h2>
+//             <img src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757238460/Graduation_2_h3qc2a.png"
+//              alt="Welcome" className="w-[600px] h-[600px]" />
 //           </div>
 //         )}
 //       </div>
@@ -30,17 +99,22 @@
 //         {!showChat ? (
 //           <Sidebar
 //             onSelectChat={(username) => {
-//               setActiveUser(username);
+//               setActiveUser({ username, fullName: username });
 //               setShowChat(true);
 //             }}
 //           />
 //         ) : (
-//           <ChatBox username={activeUser} onBack={() => setShowChat(false)} />
+//           <ChatBox
+//             username={activeUser.username}
+//             fullName={activeUser.fullName}
+//             onBack={() => setShowChat(false)}
+//           />
 //         )}
 //       </div>
 //     </div>
 //   );
 // }
+
 
 
 import { useEffect, useState } from "react";
@@ -55,6 +129,7 @@ export default function ChatLayout() {
   const [conversations, setConversations] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // ✅ Fetch conversations
   useEffect(() => {
     const fetchConversations = async () => {
@@ -66,7 +141,7 @@ export default function ChatLayout() {
 
         if (!token) return;
 
-        const res = await fetch(`${API_BASE_URL}/api/chats/recent/`, {
+        const res = await fetch(`${API_BASE_URL}/api/messages-app/chats/recent/`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -88,8 +163,8 @@ export default function ChatLayout() {
     fetchConversations();
   }, []);
 
-  // ✅ Show Empty screen
-  if (conversations && conversations.length === 0 && !showSearch) {
+  // ✅ Show Empty screen (only if no active chat and not searching)
+  if (!showChat && conversations && conversations.length === 0 && !showSearch) {
     return <EmptyConversations onSearch={() => setShowSearch(true)} />;
   }
 
@@ -97,8 +172,11 @@ export default function ChatLayout() {
   if (showSearch) {
     return (
       <SearchConversations
-        onSelectUser={(username) => {
-          setActiveUser(username);
+        onSelectUser={(user) => {
+          setActiveUser({
+            username: user.username,
+            fullName:  user.full_name,
+          });
           setShowSearch(false);
           setShowChat(true);
         }}
@@ -112,15 +190,25 @@ export default function ChatLayout() {
       <div className="hidden md:flex w-full">
         <Sidebar
           onSelectChat={(username) => {
-            setActiveUser(username);
+            // wrap username as object
+            setActiveUser({ username, fullName: username });
             setShowChat(true);
           }}
         />
-        {showChat ? (
-          <ChatBox username={activeUser} onBack={() => setShowChat(false)} />
+        {showChat && activeUser ? (
+          <ChatBox
+          key={activeUser.username}   // ✅ force remount on user change
+          username={activeUser.username}
+          fullName={activeUser.fullName}
+          onBack={() => setShowChat(false)}
+        />
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <img src="/placeholder.png" alt="Welcome" className="w-80" />
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <h2 className="text-4xl font-semibold mb-4">
+          Initiate a great conversation just <br /> before asking for referrals
+        </h2>
+            <img src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757238460/Graduation_2_h3qc2a.png"
+             alt="Welcome" className="w-[600px] h-[600px]" />
           </div>
         )}
       </div>
@@ -130,14 +218,19 @@ export default function ChatLayout() {
         {!showChat ? (
           <Sidebar
             onSelectChat={(username) => {
-              setActiveUser(username);
+              setActiveUser({ username, fullName: username });
               setShowChat(true);
             }}
           />
         ) : (
-          <ChatBox username={activeUser} onBack={() => setShowChat(false)} />
+          <ChatBox
+            username={activeUser.username}
+            fullName={activeUser.fullName}
+            onBack={() => setShowChat(false)}
+          />
         )}
       </div>
     </div>
   );
 }
+

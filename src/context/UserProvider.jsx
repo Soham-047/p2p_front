@@ -10,7 +10,7 @@ export  const UserProvider = ({ children }) => {
     if (!token) return;
     console.log("Fetching user with token:", token);
 
-    fetch(`${API_BASE_URL}/api/profile/me`, {
+    fetch(`${API_BASE_URL}/api/users-app/profile/me`, {
       headers: { "Content-Type": "application/json" ,
         Authorization: `Bearer ${token}` },
     })

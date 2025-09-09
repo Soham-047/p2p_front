@@ -5,10 +5,35 @@ import { useState, useRef, useEffect } from "react";
 import ChatHeader from "./ChatHeader";
 import { useUser } from "@/hooks/useUser";
 
-export default function ChatBox({ onBack, username }) {
+// ✅ Utility: Group messages by date
+function groupMessagesByDate(messages) {
+  return messages.reduce((groups, msg) => {
+    const date = new Date(msg.timestamp).toDateString(); // "Mon Sep 08 2025"
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(msg);
+    return groups;
+  }, {});
+}
+
+// ✅ Utility: Format date label
+function formatDateLabel(dateStr) {
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  if (dateStr === today) return "Today";
+  if (dateStr === yesterday) return "Yesterday";
+
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export default function ChatBox({ onBack, username,fullName }) {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true); // ✅ loading state
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -30,9 +55,12 @@ export default function ChatBox({ onBack, username }) {
 
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/history/${username}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          `${API_BASE_URL}/api/messages-app/history/${username}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (!res.ok) throw new Error("Failed to load history");
 
@@ -43,7 +71,10 @@ export default function ChatBox({ onBack, username }) {
             id: msg.id,
             text: msg.message || "(empty message)",
             sender: msg.sender === user.username ? "me" : "other",
-            time: new Date(msg.timestamp).toLocaleTimeString(),
+            time: new Date(msg.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit", // ⏳ no seconds
+            }),
             timestamp: new Date(msg.timestamp).getTime(),
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
@@ -82,10 +113,10 @@ export default function ChatBox({ onBack, username }) {
 
       if (data.sender === user.username) return;
 
-      // ✅ case 1: encrypted msg with message_id
       if (data.message_id) {
+        // ✅ Encrypted message
         try {
-          const res = await fetch(`${API_BASE_URL}/api/decrypt/`, {
+          const res = await fetch(`${API_BASE_URL}/api/messages-app/decrypt/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -101,24 +132,28 @@ export default function ChatBox({ onBack, username }) {
               id: data.message_id,
               text: result.decrypted_message || "(empty message)",
               sender: "other",
-              time: new Date().toLocaleTimeString(),
+              time: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
               timestamp: Date.now(),
             },
           ]);
         } catch (err) {
           console.error("Decrypt error:", err);
         }
-      }
-
-      // ✅ case 2: plain text from backend
-      if (data.message && !data.message_id) {
+      } else if (data.message) {
+        // ✅ Plain text
         setMessages((prev) => [
           ...prev,
           {
             id: data.id || Date.now(),
             text: data.message,
             sender: "other",
-            time: new Date().toLocaleTimeString(),
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
             timestamp: Date.now(),
           },
         ]);
@@ -136,7 +171,10 @@ export default function ChatBox({ onBack, username }) {
       id: Date.now(),
       text,
       sender: "me",
-      time: new Date().toLocaleTimeString(),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, newMsg]);
@@ -148,6 +186,8 @@ export default function ChatBox({ onBack, username }) {
     }
   };
 
+  const groupedMessages = groupMessagesByDate(messages);
+
   return (
     <div className="relative flex flex-col flex-1 h-full">
       {/* ✅ Loader Overlay */}
@@ -158,16 +198,31 @@ export default function ChatBox({ onBack, username }) {
       )}
 
       <Card className="flex flex-col flex-1 h-full border-0 pb-4 md:p-0 pt-20 md:pt-0">
-        <ChatHeader onBack={onBack} />
+      <ChatHeader 
+  onBack={onBack} 
+  username={username} 
+  fullName={fullName} 
+/>
 
         {/* Messages */}
         <CardContent className="flex-1 overflow-y-auto p-0 space-y-1">
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              {...msg}
-              senderName={msg.sender === "other" ? username : "Me"}
-            />
+          {Object.entries(groupedMessages).map(([date, msgs]) => (
+            <div key={date}>
+              {/* 📌 Date Separator */}
+              <div className="flex justify-center my-4">
+                <span className="bg-gray-200 text-gray-700 text-sm px-4 py-1 rounded-full">
+                  {formatDateLabel(date)}
+                </span>
+              </div>
+
+              {msgs.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  {...msg}
+                  senderName={msg.sender === "other" ? username : "Me"}
+                />
+              ))}
+            </div>
           ))}
           <div ref={messagesEndRef} />
         </CardContent>

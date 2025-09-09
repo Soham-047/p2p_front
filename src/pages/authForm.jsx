@@ -111,18 +111,20 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
         {/* Left Illustration (hidden on small, visible on md+) */}
         <div className="hidden md:flex items-center justify-center p-2 h-[300px] md:h-[500px] lg:h-[600px] w-0 md:w-5/12 lg:w-4/12">
           <img
-            src="https://illustrations.popsy.co/white/student-graduation.svg"
+            // src="https://illustrations.popsy.co/white/student-graduation.svg"
+            src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757312980/Graduation_4_bk5skb.png"
             alt="Graduation Illustration"
             className="w-full h-full object-contain"
           />
         </div>
   
         {/* Form Section */}
-        <div className="flex flex-col items-center  w-full md:max-w-xl min-h-[500px] gap-5 md:gap-8 px-4 md:px-2 lg:px-1">
+        <div className="flex flex-col items-center  w-full md:max-w-xl min-h-[600px] gap-5 md:gap-8 px-4 md:px-2 lg:px-1">
           <h2 className="text-2xl md:text-3xl lg:text-[43px] font-bold text-gray-900 mb-6">
-            {mode === "signup"
-              ? "Bridging Today’s Students with Yesterday’s Graduates."
-              : "Welcome Back! Please Sign In."}
+            {/* {mode === "signup" */}
+            Bridging Today’s Students with Yesterday’s Graduates.
+              {/* : "Bridging Today’s Students with Yesterday’s Graduates." */}
+              {/* } */}
           </h2>
   
           <form
@@ -220,7 +222,8 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
         {/* Right Illustration (hidden on <lg) */}
         <div className="hidden lg:flex items-center justify-center p-2 h-[300px] md:h-[500px] lg:h-[600px] w-0 lg:w-4/12">
           <img
-            src="https://illustrations.popsy.co/white/studying.svg"
+            // src="https://illustrations.popsy.co/white/studying.svg"
+            src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757312998/Student_Exhausted_1_loi8wh.png"
             alt="Studying Illustration"
             className="w-full h-full object-contain"
           />

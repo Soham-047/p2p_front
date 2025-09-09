@@ -1478,7 +1478,7 @@ export default function PostCard({ post }) {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
-    } catch (error) {
+    } catch {
       setIsLiked(!isLiked);
       setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
       alert("Like action failed.");
