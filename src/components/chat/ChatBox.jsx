@@ -100,7 +100,7 @@ export default function ChatBox({ onBack, username,fullName }) {
       ?.split("=")[1];
     if (!token) return;
 
-    const wsUrl = `ws://localhost:8000/ws/chat/${username}/?token=${token}`;
+    const wsUrl = `ws://p2p-backend-e8bk.onrender.com//ws/chat/${username}/?token=${token}`;
     socketRef.current = new WebSocket(wsUrl);
 
     socketRef.current.onmessage = async (event) => {
@@ -208,7 +208,7 @@ export default function ChatBox({ onBack, username,fullName }) {
         <CardContent className="flex-1 overflow-y-auto p-0 space-y-1">
           {Object.entries(groupedMessages).map(([date, msgs]) => (
             <div key={date}>
-              {/* 📌 Date Separator */}
+              {/*  Date Separator */}
               <div className="flex justify-center my-4">
                 <span className="bg-gray-200 text-gray-700 text-sm px-4 py-1 rounded-full">
                   {formatDateLabel(date)}

@@ -1,4 +1,5 @@
 
+
 // import { useEffect, useState } from "react";
 // import Sidebar from "../components/chat/SideBar";
 // import ChatBox from "../components/chat/ChatBox";
@@ -79,10 +80,11 @@
 //         />
 //         {showChat && activeUser ? (
 //           <ChatBox
-//             username={activeUser.username}
-//             fullName={activeUser.fullName}
-//             onBack={() => setShowChat(false)}
-//           />
+//           key={activeUser.username}   // ✅ force remount on user change
+//           username={activeUser.username}
+//           fullName={activeUser.fullName}
+//           onBack={() => setShowChat(false)}
+//         />
 //         ) : (
 //           <div className="flex-1 flex flex-col items-center justify-center">
 //             <h2 className="text-4xl font-semibold mb-4">
@@ -117,18 +119,32 @@
 
 
 
+
 import { useEffect, useState } from "react";
 import Sidebar from "../components/chat/SideBar";
 import ChatBox from "../components/chat/ChatBox";
 import EmptyConversations from "../components/chat/EmptyConversations";
 import SearchConversations from "../components/chat/SearchConversations";
 
-export default function ChatLayout() {
+export default function ChatLayout({ pendingChatUser, onChatUserUsed }) {
   const [showChat, setShowChat] = useState(false);
   const [activeUser, setActiveUser] = useState(null);
   const [conversations, setConversations] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Handle pending chat user from ProfileDialog
+  useEffect(() => {
+    if (pendingChatUser) {
+      setActiveUser(pendingChatUser);
+      setShowChat(true);
+      setShowSearch(false);
+      // Clear the pending user
+      if (onChatUserUsed) {
+        onChatUserUsed();
+      }
+    }
+  }, [pendingChatUser, onChatUserUsed]);
 
   // ✅ Fetch conversations
   useEffect(() => {
@@ -175,7 +191,7 @@ export default function ChatLayout() {
         onSelectUser={(user) => {
           setActiveUser({
             username: user.username,
-            fullName:  user.full_name,
+            fullName: user.full_name,
           });
           setShowSearch(false);
           setShowChat(true);
@@ -197,17 +213,18 @@ export default function ChatLayout() {
         />
         {showChat && activeUser ? (
           <ChatBox
-          key={activeUser.username}   // ✅ force remount on user change
-          username={activeUser.username}
-          fullName={activeUser.fullName}
-          onBack={() => setShowChat(false)}
-        />
+            key={activeUser.username} // ✅ force remount on user change
+            username={activeUser.username}
+            fullName={activeUser.fullName}
+            onBack={() => setShowChat(false)}
+          />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center">
             <h2 className="text-4xl font-semibold mb-4">
-          Initiate a great conversation just <br /> before asking for referrals
-        </h2>
-            <img src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757238460/Graduation_2_h3qc2a.png"
+              Initiate a great conversation just <br /> before asking for referrals
+              </h2>
+
+                       <img src="https://res.cloudinary.com/dlcsttupm/image/upload/v1757238460/Graduation_2_h3qc2a.png"
              alt="Welcome" className="w-[600px] h-[600px]" />
           </div>
         )}
@@ -233,4 +250,3 @@ export default function ChatLayout() {
     </div>
   );
 }
-

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -12,30 +13,38 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
 };
 
-const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick  }) => {
+const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
+  const navigate = useNavigate();
+  
   if (!profile) return null;
 
-
   const handleMessageClick = () => {
-    if (onMessageClick) {
-      onMessageClick({
-        username: profile.username,
-        fullName: profile.full_name || profile.username,
-      });
-    }
-    onOpenChange(false); // close the dialog
+    // Close the dialog first
+    onOpenChange(false);
+    
+    // Navigate to message page
+    navigate('/message');
+    
+    // Use setTimeout to ensure navigation completes before calling onMessageClick
+    setTimeout(() => {
+      if (onMessageClick) {
+        onMessageClick({
+          username: profile.username,
+          fullName: profile.full_name || profile.username,
+        });
+      }
+    }, 100);
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-0 bg-white rounded-lg shadow-lg">
         {/* Header cover */}
-        <div className=" h-48 bg-gradient-to-r from-blue-500 to-purple-400" />
+        <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-400" />
 
         {/* Profile Info */}
         <div className="px-6 pb-10">
-          <div className="  gap-1 -mt-16">
+          <div className="gap-1 -mt-16">
             <Avatar className="w-28 h-28 border-4 border-white shadow-md">
               <AvatarImage src={profile.avatar_url || "/placeholder-avatar.jpg"} />
               <AvatarFallback className="text-2xl">
@@ -43,7 +52,7 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick  }) => {
               </AvatarFallback>
             </Avatar>
 
-            <div className="  pt-4">
+            <div className="pt-4">
               <div className="flex justify-between items-start">
                 <div>
                   <h1 className="text-2xl font-bold">{profile.full_name || profile.username}</h1>
@@ -56,8 +65,8 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick  }) => {
                   )}
                 </div>
                 <Button onClick={handleMessageClick} className="rounded-full">
-                Message
-              </Button>
+                  Message
+                </Button>
               </div>
 
               {/* Summary */}
@@ -72,20 +81,20 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick  }) => {
               {profile.experiences?.length > 0 && (
                 <div className="mt-8">
                   <h2 className="text-lg font-semibold flex items-center mb-4">
-                   Work Experience
+                    Work Experience
                   </h2>
                   <div className="space-y-4">
                     {profile.experiences.map((exp, i) => (
                       <Card key={i} className="border-none">
                         <CardContent className="p-4">
                           <span className="flex items-center text-lg mb-1">
-                        <Briefcase className="w-5 h-5 mr-2" /> 
-                          <h3 className="font-semibold">{exp.title}</h3> 
+                            <Briefcase className="w-5 h-5 mr-2" /> 
+                            <h3 className="font-semibold">{exp.title}</h3> 
                           </span>
                           <p className="text-blue-600 font-medium">{exp.company}</p>
                           <p className="text-gray-600 text-sm flex items-center mt-1">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {formatDate(exp.start_date)} –{" "}
+                            {formatDate(exp.start_date)} – {" "}
                             {exp.end_date ? formatDate(exp.end_date) : "Present"}
                             {exp.location && ` • ${exp.location}`}
                           </p>

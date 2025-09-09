@@ -507,7 +507,7 @@ export default function CreatePostCard() {
   };
 
   return (
-    <Card className="bg-white rounded-lg p-4 outline outline-1 outline-neutral-200">
+    <Card className="bg-white rounded-lg p-4  outline-1 outline-neutral-200">
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
         
         <div className="w-full md:w-1/3">

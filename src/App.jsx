@@ -1,6 +1,5 @@
-
-
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useState} from "react";
 import AuthForm from "./pages/authForm";
 import Dashboard from "./pages/DashBoard";
 import CommunityPage from "./pages/CommunityPage";
@@ -17,7 +16,18 @@ function getCookie(name) {
 }
 
 export default function App() {
-  const isLoggedIn = !!getCookie("token"); // true if token cookie exists
+  const isLoggedIn = !!getCookie("token");
+  const [pendingChatUser, setPendingChatUser] = useState(null);
+
+  // Handle message click from Dashboard search
+  const handleMessageFromDashboard = (userInfo) => {
+    setPendingChatUser(userInfo);
+  };
+
+  // Clear pending chat user when it's been used
+  const clearPendingChatUser = () => {
+    setPendingChatUser(null);
+  };
 
   return (
     <Routes>
@@ -41,7 +51,7 @@ export default function App() {
             <div className="flex min-h-screen bg-gray-50">
               <Sidebar />
               <div className="flex-1 p-2 md:p-6 pt-20 md:pt-6 ">
-                <Dashboard />
+                <Dashboard onMessageClick={handleMessageFromDashboard} />
               </div>
             </div>
           ) : (
@@ -74,7 +84,10 @@ export default function App() {
           isLoggedIn ? (
             <div className="flex h-screen bg-gray-50">
               <Sidebar />
-              <ChatLayout />
+              <ChatLayout 
+                pendingChatUser={pendingChatUser} 
+                onChatUserUsed={clearPendingChatUser}
+              />
             </div>
           ) : (
             <Navigate to="/login" replace />
