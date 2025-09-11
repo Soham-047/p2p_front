@@ -34,6 +34,7 @@ export default function ChatBox({ onBack, username,fullName }) {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -100,7 +101,7 @@ export default function ChatBox({ onBack, username,fullName }) {
       ?.split("=")[1];
     if (!token) return;
 
-    const wsUrl = `ws://p2p-backend-e8bk.onrender.com//ws/chat/${username}/?token=${token}`;
+    const wsUrl = `wss://p2p-backend-e8bk.onrender.com/ws/chat/${username}/?token=${token}`;
     socketRef.current = new WebSocket(wsUrl);
 
     socketRef.current.onmessage = async (event) => {
@@ -142,6 +143,8 @@ export default function ChatBox({ onBack, username,fullName }) {
         } catch (err) {
           console.error("Decrypt error:", err);
         }
+
+       
       } else if (data.message) {
         // ✅ Plain text
         setMessages((prev) => [
@@ -157,6 +160,10 @@ export default function ChatBox({ onBack, username,fullName }) {
             timestamp: Date.now(),
           },
         ]);
+      }
+      if (data.type === "online_status_update" && data.user_id === username) {
+        setIsOnline(data.is_online);
+        return;
       }
     };
 
@@ -202,6 +209,7 @@ export default function ChatBox({ onBack, username,fullName }) {
   onBack={onBack} 
   username={username} 
   fullName={fullName} 
+  isOnline={isOnline} 
 />
 
         {/* Messages */}
