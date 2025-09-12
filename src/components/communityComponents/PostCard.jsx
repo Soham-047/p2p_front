@@ -1171,11 +1171,3 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
 }
 
 
-<<<<<<< HEAD
-
-
-
-
-
-=======
->>>>>>> users/suraj/update-post

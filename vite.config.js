@@ -14,5 +14,20 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  },
+  build: {
+    // 👇 raises warning limit (optional)
+    chunkSizeWarningLimit: 1000,
+
+    rollupOptions: {
+      output: {
+        // 👇 manually split heavy libs into separate chunks
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          ui: ['lucide-react', 'react-datepicker'],
+         
+        }
+      }
+    }
   }
 })
