@@ -341,11 +341,8 @@
 //     </Card>
 //   );
 // }
-
-
 import { useState, useEffect } from "react";
-import { MentionsInput, Mention } from 'react-mentions';
-// import './mentions-style.css'; // Import the new CSS file
+import { MentionsInput, Mention } from "react-mentions";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -353,62 +350,59 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-// Helper to read the auth token from cookies
+// ✅ Cookie helper
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
+  if (parts.length === 2) return parts.pop().split(";").shift();
   return null;
 }
 
-// Reusable API client
+// ✅ API client
 const apiClient = {
-    async request(method, url, data = null, responseType = 'json') {
-        const headers = {};
-        const config = { method, headers };
-        const authToken = getCookie('token');
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
-        if (data && !(data instanceof FormData)) {
-            headers['Content-Type'] = 'application/json';
-            config.body = JSON.stringify(data);
-        } else if (data instanceof FormData) {
-            config.body = data;
-        }
-        
-        const fullUrl = `${API_BASE_URL}${url}`;
-        
-        try {
-            const response = await fetch(fullUrl, config);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || `Request failed with status ${response.status}`);
-            }
-            if (response.status === 204) return null;
-            if (responseType === 'blob') return response.blob();
-            return response.json();
-        } catch (error) {
-            console.error(`${method} request to ${fullUrl} failed:`, error);
-            throw error;
-        }
-    },
-    get: (url) => apiClient.request('GET', url, null, 'json'),
-    getBlob: (url) => apiClient.request('GET', url, null, 'blob'),
-    post: (url, data) => apiClient.request('POST', url, data, 'json'),
+  async request(method, url, data = null, responseType = "json") {
+    const headers = {};
+    const config = { method, headers };
+    const authToken = getCookie("token");
+    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+    if (data && !(data instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+      config.body = JSON.stringify(data);
+    } else if (data instanceof FormData) {
+      config.body = data;
+    }
+
+    const fullUrl = `${API_BASE_URL}${url}`;
+    try {
+      const response = await fetch(fullUrl, config);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Request failed with status ${response.status}`);
+      }
+      if (response.status === 204) return null;
+      if (responseType === "blob") return response.blob();
+      return response.json();
+    } catch (error) {
+      console.error(`${method} request to ${fullUrl} failed:`, error);
+      throw error;
+    }
+  },
+  get: (url) => apiClient.request("GET", url, null, "json"),
+  getBlob: (url) => apiClient.request("GET", url, null, "blob"),
+  post: (url, data) => apiClient.request("POST", url, data, "json"),
 };
 
-// Helper function to get initials from a full name
-const getInitials = (name = "") => {
-    return name
-        .split(' ')
-        .map(n => n[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
-};
+// ✅ Name initials
+const getInitials = (name = "") =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
 export default function CreatePostCard() {
   const [title, setTitle] = useState("");
@@ -417,29 +411,33 @@ export default function CreatePostCard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [user, setUser] = useState(null);
-  const [avatarSrc, setAvatarSrc] = useState('');
+  const [avatarSrc, setAvatarSrc] = useState("");
   const [userLoading, setUserLoading] = useState(true);
 
-  // Data fetching function for the react-mentions library
-  const fetchUsers = async (query, callback) => {
-    if (!query) return;
-    try {
-      const users = await apiClient.get(`/api/posts-app/users/search/?search=${query}`);
-      // Format the data for the library
-      const formattedUsers = users.map(user => ({
-        id: user.username,
-        display: user.full_name,
-        ...user 
-      }));
-      callback(formattedUsers);
-    } catch (error) {
-      console.error("Failed to fetch users for mention:", error);
-    }
+  // ✅ Mentions data loader (sync with callback)
+  const fetchUsers = (query, callback) => {
+    if (!query) return callback([]);
+
+    apiClient
+      .get(`/api/posts-app/users/search/?search=${query}`)
+      .then((users) => {
+        const formatted = (users || []).map((u) => ({
+          id: u.username,
+          display: u.full_name,
+          ...u,
+        }));
+        callback(formatted);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch users for mention:", error);
+        callback([]); // always return something
+      });
   };
 
+  // ✅ User data
   useEffect(() => {
     const fetchUserData = async () => {
-      const authToken = getCookie('token');
+      const authToken = getCookie("token");
       if (!authToken) {
         setUserLoading(false);
         return;
@@ -447,8 +445,8 @@ export default function CreatePostCard() {
 
       try {
         const [profileData, avatarBlob] = await Promise.all([
-          apiClient.get('/api/users-app/profile/me/'),
-          apiClient.getBlob('/api/users-app/profile/me/avatar/')
+          apiClient.get("/api/users-app/profile/me/"),
+          apiClient.getBlob("/api/users-app/profile/me/avatar/"),
         ]);
 
         setUser(profileData);
@@ -472,13 +470,14 @@ export default function CreatePostCard() {
     };
   }, []);
 
+  // ✅ Submit handler
   const handlePostSubmit = async () => {
     if (!title.trim() || !content.trim()) {
       alert("Please provide a title and content.");
       return;
     }
 
-    const authToken = getCookie('token');
+    const authToken = getCookie("token");
     if (!authToken) {
       alert("You must be logged in to create a post.");
       return;
@@ -487,9 +486,12 @@ export default function CreatePostCard() {
     setIsSubmitting(true);
 
     const postData = {
-      title: title,
-      content: content,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      title,
+      content,
+      tags: tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag),
     };
 
     try {
@@ -507,11 +509,13 @@ export default function CreatePostCard() {
   };
 
   return (
-    <Card className="bg-white rounded-lg p-4  outline-1 outline-neutral-200">
+    <Card className="bg-white rounded-lg p-4 outline-1 outline-neutral-200">
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
-        
+        {/* Left: user info */}
         <div className="w-full md:w-1/3">
-          <p className="text-neutral-900 text-xl font-medium font-['General_Sans'] leading-loose mb-2">Post As</p>
+          <p className="text-neutral-900 text-xl font-medium font-['General_Sans'] leading-loose mb-2">
+            Post As
+          </p>
           {userLoading ? (
             <div className="h-10 animate-pulse bg-gray-200 rounded-md w-full"></div>
           ) : user ? (
@@ -521,8 +525,12 @@ export default function CreatePostCard() {
                 <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-neutral-900 text-sm font-medium font-['Inter'] leading-tight">{user.full_name}</p>
-                <p className="text-neutral-600 text-xs font-normal font-['Inter'] leading-none">{user.email}</p>
+                <p className="text-neutral-900 text-sm font-medium font-['Inter'] leading-tight">
+                  {user.full_name}
+                </p>
+                <p className="text-neutral-600 text-xs font-normal font-['Inter'] leading-none">
+                  {user.email}
+                </p>
               </div>
             </div>
           ) : (
@@ -530,6 +538,7 @@ export default function CreatePostCard() {
           )}
         </div>
 
+        {/* Right: post form */}
         <div className="flex-1 space-y-3 w-full">
           <Input
             type="text"
@@ -539,34 +548,69 @@ export default function CreatePostCard() {
             className="text-sm placeholder:text-gray-500 border-gray-200"
             disabled={!user}
           />
-          
+
+          {/* ✅ MentionsInput with working inline styles */}
           <MentionsInput
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind? Use @ to mention users."
-            className="mentions"
             disabled={!user}
+            style={{
+              control: {
+                backgroundColor: "#fff",
+                fontSize: 14,
+                minHeight: 80,
+                border: "1px solid #e5e7eb",
+                borderRadius: 6,
+                padding: "8px",
+              },
+              input: {
+                margin: 0,
+              },
+              highlighter: {
+                overflow: "hidden",
+              },
+              suggestions: {
+                list: {
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 6,
+                  zIndex: 100,
+                },
+                item: {
+                  padding: "6px 10px",
+                  borderBottom: "1px solid #f3f4f6",
+                  cursor: "pointer",
+                },
+              },
+            }}
           >
             <Mention
               trigger="@"
               data={fetchUsers}
-              className="mentions__mention"
+              markup="@__id__"
               renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) => (
-                <div className={`user-suggestion ${focused ? 'focused' : ''}`}>
+                <div
+                  className={`flex items-center gap-2 p-1 rounded ${
+                    focused ? "bg-indigo-50" : ""
+                  }`}
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs bg-indigo-100 text-indigo-600">
                       {getInitials(suggestion.full_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{suggestion.full_name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {suggestion.full_name}
+                    </p>
                     <p className="text-xs text-gray-500">@{suggestion.username}</p>
                   </div>
                 </div>
               )}
             />
           </MentionsInput>
-          
+
           <Input
             type="text"
             placeholder="Tags (e.g., django, react, news)"
