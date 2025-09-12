@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FcGoogle } from "react-icons/fc";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;// change to your API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AuthForm() {
   const [mode, setMode] = useState("signup");
