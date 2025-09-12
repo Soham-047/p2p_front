@@ -342,15 +342,18 @@
 //   );
 // }
 import { useState, useEffect } from "react";
-import { MentionsInput, Mention } from "react-mentions";
+// Removed MentionsInput and its CSS as they are unavailable in this environment.
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Using a standard textarea
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Paperclip } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// The 'import.meta.env' object is not available in this environment.
+// Replace "YOUR_API_BASE_URL_HERE" with your actual API endpoint.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // ✅ Cookie helper
 function getCookie(name) {
@@ -362,37 +365,45 @@ function getCookie(name) {
 
 // ✅ API client
 const apiClient = {
-  async request(method, url, data = null, responseType = "json") {
-    const headers = {};
-    const config = { method, headers };
-    const authToken = getCookie("token");
-    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
-
-    if (data && !(data instanceof FormData)) {
-      headers["Content-Type"] = "application/json";
-      config.body = JSON.stringify(data);
-    } else if (data instanceof FormData) {
-      config.body = data;
-    }
-
-    const fullUrl = `${API_BASE_URL}${url}`;
-    try {
-      const response = await fetch(fullUrl, config);
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `Request failed with status ${response.status}`);
-      }
-      if (response.status === 204) return null;
-      if (responseType === "blob") return response.blob();
-      return response.json();
-    } catch (error) {
-      console.error(`${method} request to ${fullUrl} failed:`, error);
-      throw error;
-    }
-  },
-  get: (url) => apiClient.request("GET", url, null, "json"),
-  getBlob: (url) => apiClient.request("GET", url, null, "blob"),
-  post: (url, data) => apiClient.request("POST", url, data, "json"),
+    async request(method, url, data = null, responseType = 'json') {
+        const headers = {};
+        const config = { method, headers };
+        const authToken = getCookie('token');
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        if (data && !(data instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+            config.body = JSON.stringify(data);
+        } else if (data instanceof FormData) {
+            config.body = data;
+        }
+        
+        // Handle cases where the base URL might not be set
+        if (!API_BASE_URL || API_BASE_URL === "YOUR_API_BASE_URL_HERE") {
+            const errorMsg = "API_BASE_URL is not configured. Please replace 'YOUR_API_BASE_URL_HERE' in the code.";
+            console.error(errorMsg);
+            throw new Error(errorMsg);
+        }
+        const fullUrl = `${API_BASE_URL}${url}`;
+        
+        try {
+            const response = await fetch(fullUrl, config);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `Request failed with status ${response.status}`);
+            }
+            if (response.status === 204) return null;
+            if (responseType === 'blob') return response.blob();
+            return response.json();
+        } catch (error) {
+            console.error(`${method} request to ${fullUrl} failed:`, error);
+            throw error;
+        }
+    },
+    get: (url) => apiClient.request('GET', url, null, 'json'),
+    getBlob: (url) => apiClient.request('GET', url, null, 'blob'),
+    post: (url, data) => apiClient.request('POST', url, data, 'json'),
 };
 
 // ✅ Name initials
@@ -404,7 +415,7 @@ const getInitials = (name = "") =>
     .join("")
     .toUpperCase();
 
-export default function CreatePostCard() {
+export default function CreatePostCard({ onPostCreated }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
@@ -414,61 +425,39 @@ export default function CreatePostCard() {
   const [avatarSrc, setAvatarSrc] = useState("");
   const [userLoading, setUserLoading] = useState(true);
 
-  // ✅ Mentions data loader (sync with callback)
-  const fetchUsers = (query, callback) => {
-    if (!query) return callback([]);
-
-    apiClient
-      .get(`/api/posts-app/users/search/?search=${query}`)
-      .then((users) => {
-        const formatted = (users || []).map((u) => ({
-          id: u.username,
-          display: u.full_name,
-          ...u,
-        }));
-        callback(formatted);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch users for mention:", error);
-        callback([]); // always return something
-      });
-  };
-
-  // ✅ User data
   useEffect(() => {
     const fetchUserData = async () => {
-      const authToken = getCookie("token");
-      if (!authToken) {
-        setUserLoading(false);
-        return;
-      }
-
-      try {
-        const [profileData, avatarBlob] = await Promise.all([
-          apiClient.get("/api/users-app/profile/me/"),
-          apiClient.getBlob("/api/users-app/profile/me/avatar/"),
-        ]);
-
-        setUser(profileData);
-
-        if (avatarBlob && avatarBlob.size > 0) {
-          setAvatarSrc(URL.createObjectURL(avatarBlob));
+        const authToken = getCookie('token');
+        if (!authToken) {
+            setUserLoading(false);
+            return;
         }
-      } catch (error) {
-        console.error("Failed to load user data for posting:", error);
-      } finally {
-        setUserLoading(false);
-      }
+
+        try {
+            const profileData = await apiClient.get('/api/users-app/profile/me/');
+            setUser(profileData);
+
+             if (profileData && profileData.avatar_url) {
+          setAvatarSrc(profileData.avatar_url);
+        }
+
+            
+
+        } catch (error) {
+            console.error("Failed to load user profile data:", error);
+        } finally {
+            setUserLoading(false);
+        }
     };
 
     fetchUserData();
 
     return () => {
-      if (avatarSrc) {
-        URL.revokeObjectURL(avatarSrc);
-      }
+        if (avatarSrc) {
+            URL.revokeObjectURL(avatarSrc);
+        }
     };
-  }, []);
+}, []);
 
   // ✅ Submit handler
   const handlePostSubmit = async () => {
@@ -500,7 +489,11 @@ export default function CreatePostCard() {
       setTitle("");
       setContent("");
       setTags("");
-      window.location.reload();
+
+      if (onPostCreated) {
+        onPostCreated();
+      }
+      
     } catch (error) {
       alert(`Error creating post: ${error.message}`);
     } finally {
@@ -548,69 +541,15 @@ export default function CreatePostCard() {
             className="text-sm placeholder:text-gray-500 border-gray-200"
             disabled={!user}
           />
-
-          {/* ✅ MentionsInput with working inline styles */}
-          <MentionsInput
+          
+         <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind? Use @ to mention users."
+            placeholder="What's on your mind?"
+            className="text-sm placeholder:text-gray-500 border-gray-200 min-h-[80px]"
             disabled={!user}
-            style={{
-              control: {
-                backgroundColor: "#fff",
-                fontSize: 14,
-                minHeight: 80,
-                border: "1px solid #e5e7eb",
-                borderRadius: 6,
-                padding: "8px",
-              },
-              input: {
-                margin: 0,
-              },
-              highlighter: {
-                overflow: "hidden",
-              },
-              suggestions: {
-                list: {
-                  backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 6,
-                  zIndex: 100,
-                },
-                item: {
-                  padding: "6px 10px",
-                  borderBottom: "1px solid #f3f4f6",
-                  cursor: "pointer",
-                },
-              },
-            }}
-          >
-            <Mention
-              trigger="@"
-              data={fetchUsers}
-              markup="@__id__"
-              renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) => (
-                <div
-                  className={`flex items-center gap-2 p-1 rounded ${
-                    focused ? "bg-indigo-50" : ""
-                  }`}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs bg-indigo-100 text-indigo-600">
-                      {getInitials(suggestion.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {suggestion.full_name}
-                    </p>
-                    <p className="text-xs text-gray-500">@{suggestion.username}</p>
-                  </div>
-                </div>
-              )}
-            />
-          </MentionsInput>
-
+          />
+          
           <Input
             type="text"
             placeholder="Tags (e.g., django, react, news)"
