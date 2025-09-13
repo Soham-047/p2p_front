@@ -321,6 +321,7 @@ import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ThumbsUp, Reply, Tr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import DOMPurify from 'dompurify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -771,10 +772,32 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
 
 
 
+// ✅ NAYA HELPER COMPONENT (PostCard se pehle rakhein)
+function RenderContentWithMentions({ content, mentions }) {
+  if (!mentions || mentions.length === 0) {
+    return <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap">{content}</p>;
+  }
 
+  let finalContentHtml = content;
+
+  mentions.forEach(mention => {
+    const usernameText = `@${mention.username}`;
+    const linkHtml = `<a href="/profile/${mention.username}" style="color: #2563eb; font-weight: 500;">${mention.full_name}</a>`;
+    finalContentHtml = finalContentHtml.replaceAll(usernameText, linkHtml);
+  });
+
+  const sanitizedHtml = DOMPurify.sanitize(finalContentHtml);
+
+  return (
+    <div
+      className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap"
+      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+    />
+  );
+}
 // ------------------ PostCard Component ------------------
 export default function PostCard({ post, currentUser, currentUserAvatar }) {
-  const { author_full_name, author_username, headline, content, title, created_at, slug, tag_names, avatar_url } = post;
+  const { author_full_name, author_username, headline, content, title, created_at, slug, tag_names, avatar_url,mentions } = post;
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -950,7 +973,7 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 mb-4">
       {/* Post Header */}
       <div className="p-4 pb-3">
         <div className="flex justify-between items-start">
@@ -983,7 +1006,12 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
       {/* Post Content */}
       <div className="px-4 pb-3">
         {title && <h3 className="font-semibold text-lg mb-2 text-gray-900">{title}</h3>}
-        <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap">{content}</p>
+        {/* <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap">{content}</p> */}
+
+        <div className="text-gray-800 text-m whitespace-pre-wrap break-words break-all overflow-hidden">
+  <RenderContentWithMentions content={content} mentions={mentions} />
+</div>
+
         {tag_names && tag_names.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {tag_names.map((tag, index) => (
@@ -1171,11 +1199,3 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
 }
 
 
-<<<<<<< HEAD
-
-
-
-
-
-=======
->>>>>>> users/suraj/update-post
