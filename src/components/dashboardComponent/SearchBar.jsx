@@ -445,7 +445,7 @@ const SearchBar = ({ onMessageClick }) => {
 
   // ⏳ Debounce search
   useEffect(() => {
-    if (query.length <= 2) {
+    if (query.length <= 1) {
       setSearchResults([]);
       return;
     }
