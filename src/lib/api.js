@@ -4,12 +4,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 async function request(path, options = {}) {
-  
   const token = document.cookie
-  .split("; ")
-  .find((row) => row.startsWith("token="))
-  ?.split("=")[1];
-if (!token) return;
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
+  if (!token) return;
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -20,8 +20,13 @@ if (!token) return;
   });
 
   if (!res.ok) throw new Error(await res.text());
+
+  // ✅ Handle 204 No Content safely
+  if (res.status === 204) return null;
+
   return res.json();
 }
+
 
 export const api = {
   get: (path) => request(path),
