@@ -8,7 +8,7 @@ import { Search, X } from "lucide-react";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Sidebar({ onSelectChat }) {
-  const [activeTab, setActiveTab] = useState("all");
+  
   const [selectedChat, setSelectedChat] = useState(null);
   const [conversations, setConversations] = useState([]);
   
@@ -81,7 +81,7 @@ export default function Sidebar({ onSelectChat }) {
         }
 
         const data = await res.json();
-        setSearchResults(data || []);
+        setSearchResults(data.results || []);
       } catch (err) {
         console.error("Error searching users:", err);
         setSearchResults([]);
@@ -171,23 +171,7 @@ export default function Sidebar({ onSelectChat }) {
       </div>
 
       {/* Tabs - Hide when in search mode */}
-      {!isSearchMode && (
-        <div className="flex justify-around px-4 mb-2">
-          {["All", "Read", "Unread"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`px-4 py-1 rounded-full text-sm font-medium transition ${
-                activeTab === tab.toLowerCase()
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      )}
+     
 
       {/* Content Area */}
       <ScrollArea className="flex-1">
@@ -238,40 +222,67 @@ export default function Sidebar({ onSelectChat }) {
           )}
 
           {/* Existing Conversations */}
-          {!isSearchMode && conversations.map((c) => {
-            const displayName = c.other_user.full_name || c.other_user.username;
-            return (
-              <div
-                key={c.id}
-                onClick={() => handleSelectConversation(c)}
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition rounded-lg ${
-                  selectedChat === c.id ? "bg-indigo-50" : "hover:bg-gray-100"
-                }`}
-              >
-                <Avatar>
-                  <AvatarImage src="/avatars/default.png" />
-                  <AvatarFallback>
-                    {displayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+         {/* Existing Conversations */}
+{!isSearchMode &&
+  conversations.map((c) => {
+    const displayName = c.other_user.full_name || c.other_user.username;
+    const isSelected = selectedChat === c.id;
+    const hasUnread = c.unread_count > 0;
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium truncate">{displayName}</p>
-                    <span className="text-xs text-gray-400">
-                      {new Date(c.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 truncate">
-                    {c.last_message_preview}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+    return (
+      <div
+        key={c.id}
+        onClick={() => handleSelectConversation(c)}
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition rounded-lg
+          ${isSelected 
+            ? "bg-indigo-100 border-l-4 border-indigo-600" 
+            : hasUnread 
+              ? "bg-gray-50 hover:bg-gray-100" 
+              : "hover:bg-gray-50"
+          }`}
+      >
+        <Avatar>
+          <AvatarImage src="/avatars/default.png" />
+          <AvatarFallback>
+            {displayName.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-center">
+            <p
+              className={`font-medium truncate ${
+                hasUnread ? "text-gray-900 font-semibold" : "text-gray-700"
+              }`}
+            >
+              {displayName}
+            </p>
+            <span className="text-xs text-gray-400">
+              {new Date(c.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <p
+            className={`text-sm truncate ${
+              hasUnread ? "text-gray-800 font-medium" : "text-gray-500"
+            }`}
+          >
+            {c.last_message_preview}
+          </p>
+        </div>
+
+        {/* Unread count badge */}
+        {hasUnread && (
+          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-indigo-600 text-white">
+            {c.unread_count}
+          </span>
+        )}
+      </div>
+    );
+  })}
+
         </div>
       </ScrollArea>
     </Card>
