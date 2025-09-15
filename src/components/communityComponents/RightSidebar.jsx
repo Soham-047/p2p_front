@@ -118,7 +118,7 @@ const SearchBar = ({ onMessageClick }) => {
       }
 
       const data = await res.json();
-      setSearchResults(data || []);
+      setSearchResults(data.results || []);
     } catch (err) {
       console.error("Error searching users:", err);
       setSearchResults([]);
@@ -152,7 +152,7 @@ const SearchBar = ({ onMessageClick }) => {
       }
 
       const data = await res.json();
-      setSearchResults(data || []);
+      setSearchResults(data.results || []);
     } catch (err) {
       console.error("Error searching posts:", err);
       setSearchResults([]);

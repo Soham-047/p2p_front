@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { Search, X, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -150,7 +149,7 @@ const SearchBar = ({ onMessageClick }) => {
 
   // ⏳ Debounce search
   useEffect(() => {
-    if (query.length <= 1) {
+    if (query.length <= 2) {
       setSearchResults([]);
       return;
     }

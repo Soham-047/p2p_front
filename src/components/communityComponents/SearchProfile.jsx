@@ -1,25 +1,279 @@
+// import React, { useEffect, useState } from "react";
+// import { MapPin, Calendar, ExternalLink, Briefcase, Award, GraduationCap } from "lucide-react";
+// import { Dialog, DialogContent } from "@/components/ui/dialog";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import { Card, CardContent } from "@/components/ui/card";
+// import { Badge } from "@/components/ui/badge";
+
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// const formatDate = (dateString) => {
+//   if (!dateString) return "";
+//   const date = new Date(dateString);
+//   return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+// };
+
+// const SearchProfile = ({ open, onOpenChange, username }) => {
+//   const [profile, setProfile] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     if (!username || !open) return;
+
+//     const fetchProfile = async () => {
+//       try {
+//         const token = document.cookie
+//           .split("; ")
+//           .find((row) => row.startsWith("token="))
+//           ?.split("=")[1];
+
+//         const res = await fetch(`${API_BASE_URL}/api/users-app/profile/${username}/`, {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+
+//         if (!res.ok) throw new Error("Failed to load profile");
+//         const data = await res.json();
+//         setProfile(data);
+//       } catch (err) {
+//         console.error(err);
+//         setProfile(null);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchProfile();
+//   }, [username, open]);
+
+//   if (!open) return null;
+
+//   return (
+//     <Dialog open={open} onOpenChange={onOpenChange}>
+//       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-0 bg-white rounded-lg shadow-lg">
+//         {loading ? (
+//           <div className="p-6">Loading...</div>
+//         ) : !profile ? (
+//           <div className="p-6 text-red-500">Profile not found</div>
+//         ) : (
+//           <>
+//             {/* Header cover */}
+//             <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-400" />
+
+//             {/* Profile Info */}
+//             <div className="px-6 pb-10">
+//               <div className="gap-1 -mt-16">
+//                 <Avatar className="w-28 h-28 border-4 border-white shadow-md">
+//                   <AvatarImage src={profile.avatar_url || "/placeholder-avatar.jpg"} />
+//                   <AvatarFallback className="text-2xl">
+//                     {profile.username?.charAt(0).toUpperCase()}
+//                   </AvatarFallback>
+//                 </Avatar>
+
+//                 <div className="pt-4">
+//                   <h1 className="text-2xl font-bold">{profile.full_name || profile.username}</h1>
+//                   {profile.headline && <p className="text-blue-600 font-medium">{profile.headline}</p>}
+//                   {profile.location && (
+//                     <p className="text-gray-600 flex items-center mt-1">
+//                       <MapPin className="w-4 h-4 mr-1" />
+//                       {profile.location}
+//                     </p>
+//                   )}
+
+//                   {/* Summary */}
+//                   {profile.about && (
+//                     <div className="mt-6">
+//                       <h2 className="text-lg font-semibold mb-2">Summary</h2>
+//                       <p className="text-gray-700">{profile.about}</p>
+//                     </div>
+//                   )}
+
+//                   {/* Work Experience */}
+//                   {profile.experiences?.length > 0 && (
+//                     <div className="mt-8">
+//                       <h2 className="text-lg font-semibold flex items-center mb-4">Work Experience</h2>
+//                       <div className="space-y-4">
+//                         {profile.experiences.map((exp, i) => (
+//                           <Card key={i} className="border-none">
+//                             <CardContent className="p-4">
+//                               <span className="flex items-center text-lg mb-1">
+//                                 <Briefcase className="w-5 h-5 mr-2" />
+//                                 <h3 className="font-semibold">{exp.title}</h3>
+//                               </span>
+//                               <p className="text-blue-600 font-medium">{exp.company}</p>
+//                               <p className="text-gray-600 text-sm flex items-center mt-1">
+//                                 <Calendar className="w-4 h-4 mr-1" />
+//                                 {formatDate(exp.start_date)} –{" "}
+//                                 {exp.end_date ? formatDate(exp.end_date) : "Present"}
+//                                 {exp.location && ` • ${exp.location}`}
+//                               </p>
+//                               {exp.description && (
+//                                 <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
+//                               )}
+//                             </CardContent>
+//                           </Card>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {/* Education */}
+//                   {profile.education?.length > 0 && (
+//                     <div className="mt-8">
+//                       <h2 className="text-lg font-semibold flex items-center mb-4">
+//                         <GraduationCap className="w-5 h-5 mr-2" /> Education
+//                       </h2>
+//                       <div className="space-y-4">
+//                         {profile.education.map((edu, i) => (
+//                           <Card key={i} className="border-l-4 border-l-blue-500">
+//                             <CardContent className="p-4">
+//                               <h3 className="font-semibold">{edu.institution}</h3>
+//                               <p className="text-blue-600 font-medium">{edu.degree}</p>
+//                               <p className="text-gray-600 text-sm flex items-center mt-1">
+//                                 <Calendar className="w-4 h-4 mr-1" />
+//                                 {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
+//                               </p>
+//                               {edu.description && (
+//                                 <p className="text-gray-700 mt-2 text-sm">{edu.description}</p>
+//                               )}
+//                             </CardContent>
+//                           </Card>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {/* Achievements */}
+//                   {profile.achievements?.length > 0 && (
+//                     <div className="mt-8">
+//                       <h2 className="text-lg font-semibold flex items-center mb-4">
+//                         <Award className="w-5 h-5 mr-2" /> Achievements
+//                       </h2>
+//                       <div className="space-y-4">
+//                         {profile.achievements.map((ach, i) => (
+//                           <Card key={i} className="border-l-4 border-l-yellow-500">
+//                             <CardContent className="p-4">
+//                               <h3 className="font-semibold">{ach.title}</h3>
+//                               <p className="text-blue-600 font-medium">{ach.organization}</p>
+//                               <p className="text-gray-600 text-sm flex items-center mt-1">
+//                                 <Calendar className="w-4 h-4 mr-1" />
+//                                 {formatDate(ach.date)}
+//                               </p>
+//                               {ach.description && (
+//                                 <p className="text-gray-700 mt-2 text-sm">{ach.description}</p>
+//                               )}
+//                             </CardContent>
+//                           </Card>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {/* Skills */}
+//                   {profile.skills?.length > 0 && (
+//                     <div className="mt-8">
+//                       <h2 className="text-lg font-semibold mb-4">Skills</h2>
+//                       <div className="flex flex-wrap gap-2">
+//                         {profile.skills.map((skill, i) => (
+//                           <Badge key={i} variant="secondary" className="px-3 py-1">
+//                             {skill.name || skill}
+//                           </Badge>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {/* Links */}
+//                   {profile.links?.length > 0 && (
+//                     <div className="mt-8">
+//                       <h2 className="text-lg font-semibold mb-4">Links</h2>
+//                       <div className="space-y-2">
+//                         {profile.links.map((link, i) => (
+//                           <a
+//                             key={i}
+//                             href={link}
+//                             target="_blank"
+//                             rel="noopener noreferrer"
+//                             className="flex items-center text-blue-600 hover:text-blue-800"
+//                           >
+//                             <ExternalLink className="w-4 h-4 mr-2" />
+//                             {link}
+//                           </a>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           </>
+//         )}
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
+
+// export default SearchProfile;
+
+
+
 import React, { useEffect, useState } from "react";
+// Removed useNavigate since the message button is gone
 import { MapPin, Calendar, ExternalLink, Briefcase, Award, GraduationCap } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Removed Button since it's no longer used
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Helper function to format dates
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
 };
 
+// Component for expandable text sections
+const ExpandableText = ({ text, maxLength = 100, maxLines = 2 }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!text) return null;
+
+  const isLongText = text.length > maxLength;
+  const displayText = !expanded && isLongText ? text.slice(0, maxLength) + "..." : text;
+
+  return (
+    <div className="text-gray-700 break-words mt-2">
+      <p className={`line-clamp-${!expanded ? maxLines : "none"} whitespace-pre-wrap`}>
+        {displayText}
+      </p>
+      {isLongText && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-blue-600 hover:text-blue-800 mt-1 text-sm font-medium"
+        >
+          {expanded ? "View less" : "View more"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+
+// The onMessageClick prop has been removed
 const SearchProfile = ({ open, onOpenChange, username }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Removed useNavigate hook
 
   useEffect(() => {
     if (!username || !open) return;
 
+    setLoading(true);
     const fetchProfile = async () => {
       try {
         const token = document.cookie
@@ -48,21 +302,20 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
     fetchProfile();
   }, [username, open]);
 
+  // Removed the handleMessageClick function
+
   if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-0 bg-white rounded-lg shadow-lg">
         {loading ? (
-          <div className="p-6">Loading...</div>
+          <div className="flex items-center justify-center h-48">Loading profile...</div>
         ) : !profile ? (
-          <div className="p-6 text-red-500">Profile not found</div>
+          <div className="flex items-center justify-center h-48 text-red-500">Profile not found.</div>
         ) : (
           <>
-            {/* Header cover */}
             <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-400" />
-
-            {/* Profile Info */}
             <div className="px-6 pb-10">
               <div className="gap-1 -mt-16">
                 <Avatar className="w-28 h-28 border-4 border-white shadow-md">
@@ -73,20 +326,25 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
                 </Avatar>
 
                 <div className="pt-4">
-                  <h1 className="text-2xl font-bold">{profile.full_name || profile.username}</h1>
-                  {profile.headline && <p className="text-blue-600 font-medium">{profile.headline}</p>}
-                  {profile.location && (
-                    <p className="text-gray-600 flex items-center mt-1">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {profile.location}
-                    </p>
-                  )}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h1 className="text-2xl font-bold">{profile.full_name || profile.username}</h1>
+                      {profile.headline && <p className="text-blue-600 font-medium">{profile.headline}</p>}
+                      {profile.location && (
+                        <p className="text-gray-600 flex items-center mt-1">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {profile.location}
+                        </p>
+                      )}
+                    </div>
+                    {/* Message Button has been removed from here */}
+                  </div>
 
                   {/* Summary */}
                   {profile.about && (
                     <div className="mt-6">
                       <h2 className="text-lg font-semibold mb-2">Summary</h2>
-                      <p className="text-gray-700">{profile.about}</p>
+                      <ExpandableText text={profile.about} maxLength={200} maxLines={3} />
                     </div>
                   )}
 
@@ -105,13 +363,10 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
                               <p className="text-blue-600 font-medium">{exp.company}</p>
                               <p className="text-gray-600 text-sm flex items-center mt-1">
                                 <Calendar className="w-4 h-4 mr-1" />
-                                {formatDate(exp.start_date)} –{" "}
-                                {exp.end_date ? formatDate(exp.end_date) : "Present"}
+                                {formatDate(exp.start_date)} – {exp.end_date ? formatDate(exp.end_date) : "Present"}
                                 {exp.location && ` • ${exp.location}`}
                               </p>
-                              {exp.description && (
-                                <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
-                              )}
+                              {exp.description && <ExpandableText text={exp.description} maxLength={300} maxLines={2} />}
                             </CardContent>
                           </Card>
                         ))}
@@ -135,8 +390,30 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
                                 <Calendar className="w-4 h-4 mr-1" />
                                 {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
                               </p>
-                              {edu.description && (
-                                <p className="text-gray-700 mt-2 text-sm">{edu.description}</p>
+                              {edu.description && <ExpandableText text={edu.description} maxLength={300} maxLines={2} />}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Projects */}
+                  {profile.projects?.length > 0 && (
+                    <div className="mt-8">
+                      <h2 className="text-lg font-semibold flex items-center mb-4">
+                        <Briefcase className="w-5 h-5 mr-2" /> Projects
+                      </h2>
+                      <div className="space-y-4">
+                        {profile.projects.map((project, i) => (
+                          <Card key={i} className="border-none w-full">
+                            <CardContent className="p-4 w-full">
+                              <h3 className="font-semibold break-words">{project.title}</h3>
+                              {project.description && <ExpandableText text={project.description} maxLength={200} maxLines={2} />}
+                              {project.link && (
+                                <a href={project.link} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:text-blue-800 mt-2 break-words">
+                                  <ExternalLink className="w-4 h-4 mr-2" /> View Project
+                                </a>
                               )}
                             </CardContent>
                           </Card>
@@ -145,24 +422,27 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
                     </div>
                   )}
 
-                  {/* Achievements */}
-                  {profile.achievements?.length > 0 && (
+                  {/* Certificates */}
+                  {profile.certificates?.length > 0 && (
                     <div className="mt-8">
                       <h2 className="text-lg font-semibold flex items-center mb-4">
-                        <Award className="w-5 h-5 mr-2" /> Achievements
+                        <Award className="w-5 h-5 mr-2" /> Certificates
                       </h2>
                       <div className="space-y-4">
-                        {profile.achievements.map((ach, i) => (
-                          <Card key={i} className="border-l-4 border-l-yellow-500">
+                        {profile.certificates.map((cert, i) => (
+                          <Card key={i} className="border-none">
                             <CardContent className="p-4">
-                              <h3 className="font-semibold">{ach.title}</h3>
-                              <p className="text-blue-600 font-medium">{ach.organization}</p>
+                              <h3 className="font-semibold">{cert.name}</h3>
+                              {cert.issuer && <p className="text-blue-600 font-medium">{cert.issuer}</p>}
                               <p className="text-gray-600 text-sm flex items-center mt-1">
                                 <Calendar className="w-4 h-4 mr-1" />
-                                {formatDate(ach.date)}
+                                {cert.issue_date ? formatDate(cert.issue_date) : "N/A"}
+                                {cert.credential_id && ` • ID: ${cert.credential_id}`}
                               </p>
-                              {ach.description && (
-                                <p className="text-gray-700 mt-2 text-sm">{ach.description}</p>
+                              {cert.credential_url && (
+                                <a href={cert.credential_url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:text-blue-800 mt-1">
+                                  <ExternalLink className="w-4 h-4 mr-2" /> View Certificate
+                                </a>
                               )}
                             </CardContent>
                           </Card>
@@ -191,13 +471,7 @@ const SearchProfile = ({ open, onOpenChange, username }) => {
                       <h2 className="text-lg font-semibold mb-4">Links</h2>
                       <div className="space-y-2">
                         {profile.links.map((link, i) => (
-                          <a
-                            key={i}
-                            href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center text-blue-600 hover:text-blue-800"
-                          >
+                          <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:text-blue-800">
                             <ExternalLink className="w-4 h-4 mr-2" />
                             {link}
                           </a>
