@@ -36,7 +36,7 @@ const SearchBar = ({ onMessageClick }) => {
       setLoading(true);
       const token = getCookie("token");
       if (!token) return;
-
+  
       const res = await fetch(
         `${API_BASE_URL}/api/posts-app/global-search/?q=${encodeURIComponent(
           searchTerm
@@ -48,14 +48,14 @@ const SearchBar = ({ onMessageClick }) => {
           },
         }
       );
-
+  
       if (!res.ok) {
         setSearchResults([]);
         return;
       }
-
+  
       const data = await res.json();
-      setSearchResults(data || []);
+      setSearchResults(data?.results || []);
     } catch (err) {
       console.error("Error searching users:", err);
       setSearchResults([]);
@@ -63,14 +63,13 @@ const SearchBar = ({ onMessageClick }) => {
       setLoading(false);
     }
   }, []);
-
-  // 🔎 Search posts
+  
   const searchPosts = useCallback(async (searchTerm) => {
     try {
       setLoading(true);
       const token = getCookie("token");
       if (!token) return;
-
+  
       const res = await fetch(
         `${API_BASE_URL}/api/posts-app/global-search/?q=${encodeURIComponent(
           searchTerm
@@ -82,14 +81,14 @@ const SearchBar = ({ onMessageClick }) => {
           },
         }
       );
-
+  
       if (!res.ok) {
         setSearchResults([]);
         return;
       }
-
+  
       const data = await res.json();
-      setSearchResults(data || []);
+      setSearchResults(data?.results || []);
     } catch (err) {
       console.error("Error searching posts:", err);
       setSearchResults([]);
@@ -97,6 +96,7 @@ const SearchBar = ({ onMessageClick }) => {
       setLoading(false);
     }
   }, []);
+  
 
   // 👤 Fetch user profile
   const fetchUserProfile = async (username) => {

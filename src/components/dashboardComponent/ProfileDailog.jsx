@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { MapPin, Calendar, ExternalLink, Briefcase, Award, GraduationCap } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,25 +7,71 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
+// Format date
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
 };
 
+// const ExpandableText = ({ text, maxLength = 100, maxLines = 2 }) => {
+//   const [expanded, setExpanded] = useState(false);
+
+//   if (!text) return null;
+
+//   const truncatedByLength = text.length > maxLength;
+//   const displayedText = !expanded && truncatedByLength ? text.slice(0, maxLength) + "..." : text;
+
+//   return (
+//     <div className="text-gray-700 break-words">
+//   <p className={`line-clamp-${!expanded ? maxLines : "none"} break-words`}>
+//     {displayedText}
+//   </p>
+//   {truncatedByLength && (
+//     <button
+//       onClick={() => setExpanded(!expanded)}
+//       className="text-blue-600 hover:text-blue-800 mt-1 text-sm font-medium"
+//     >
+//       {expanded ? "View less" : "View more"}
+//     </button>
+//   )}
+// </div>
+
+//   );
+// };// Expandable text component
+
+const ExpandableText = ({ text, maxLength = 100, maxLines = 2 }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!text) return null;
+
+  const truncatedByLength = text.length > maxLength;
+  const displayedText = !expanded && truncatedByLength ? text.slice(0, maxLength) + "..." : text;
+
+  return (
+    <div className="text-gray-700 break-all">
+      <p className={`line-clamp-${!expanded ? maxLines : "none"} break-all`}>
+        {displayedText}
+      </p>
+      {truncatedByLength && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-blue-600 hover:text-blue-800 mt-1 text-sm font-medium"
+        >
+          {expanded ? "View less" : "View more"}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
   const navigate = useNavigate();
-  
   if (!profile) return null;
 
   const handleMessageClick = () => {
-    // Close the dialog first
     onOpenChange(false);
-    
-    // Navigate to message page
     navigate('/message');
-    
-    // Use setTimeout to ensure navigation completes before calling onMessageClick
     setTimeout(() => {
       if (onMessageClick) {
         onMessageClick({
@@ -73,7 +119,7 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
               {profile.about && (
                 <div className="mt-6">
                   <h2 className="text-lg font-semibold mb-2">Summary</h2>
-                  <p className="text-gray-700">{profile.about}</p>
+                  <ExpandableText text={profile.about} maxLength={100} maxLines={2} />
                 </div>
               )}
 
@@ -94,12 +140,11 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
                           <p className="text-blue-600 font-medium">{exp.company}</p>
                           <p className="text-gray-600 text-sm flex items-center mt-1">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {formatDate(exp.start_date)} – {" "}
-                            {exp.end_date ? formatDate(exp.end_date) : "Present"}
+                            {formatDate(exp.start_date)} – {exp.end_date ? formatDate(exp.end_date) : "Present"}
                             {exp.location && ` • ${exp.location}`}
                           </p>
                           {exp.description && (
-                            <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
+                            <ExpandableText text={exp.description} maxLength={300} maxLines={2} />
                           )}
                         </CardContent>
                       </Card>
@@ -125,7 +170,7 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
                             {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
                           </p>
                           {edu.description && (
-                            <p className="text-gray-700 mt-2 text-sm">{edu.description}</p>
+                            <ExpandableText text={edu.description} maxLength={300} maxLines={2} />
                           )}
                         </CardContent>
                       </Card>
@@ -133,32 +178,78 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
                   </div>
                 </div>
               )}
+                 {/* Projects */}
+                 {profile.projects?.length > 0 && (
+  <div className="mt-8">
+    <h2 className="text-lg font-semibold flex items-center mb-4">
+      <Briefcase className="w-5 h-5 mr-2" /> Projects
+    </h2>
+    <div className="space-y-4">
+      {profile.projects.map((project, i) => (
+        <Card key={i} className="border-none w-full">
+        <CardContent className="p-4 w-full">
+  <span className="flex items-center text-lg mb-1">
+    <Briefcase className="w-5 h-5 mr-2" />
+    <h3 className="font-semibold break-words">{project.title}</h3>
+  </span>
+  {project.description && (
+    <ExpandableText text={project.description} maxLength={100} maxLines={2} />
+  )}
+  {project.link && (
+    <a
+      href={project.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center text-blue-600 hover:text-blue-800 mt-2 break-words"
+    >
+      <ExternalLink className="w-4 h-4 mr-2" /> View Project
+    </a>
+  )}
+</CardContent>
+
+        </Card>
+      ))}
+    </div>
+  </div>
+)}
+
 
               {/* Achievements */}
-              {profile.achievements?.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-semibold flex items-center mb-4">
-                    <Award className="w-5 h-5 mr-2" /> Achievements
-                  </h2>
-                  <div className="space-y-4">
-                    {profile.achievements.map((ach, i) => (
-                      <Card key={i} className="border-l-4 border-l-yellow-500">
-                        <CardContent className="p-4">
-                          <h3 className="font-semibold">{ach.title}</h3>
-                          <p className="text-blue-600 font-medium">{ach.organization}</p>
-                          <p className="text-gray-600 text-sm flex items-center mt-1">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {formatDate(ach.date)}
-                          </p>
-                          {ach.description && (
-                            <p className="text-gray-700 mt-2 text-sm">{ach.description}</p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {profile.certificates?.length > 0 && (
+  <div className="mt-8">
+    <h2 className="text-lg font-semibold flex items-center mb-4">
+      <Award className="w-5 h-5 mr-2" /> Certificates
+    </h2>
+    <div className="space-y-4">
+      {profile.certificates.map((cert, i) => (
+        <Card key={i} className="border-none">
+          <CardContent className="p-4">
+            <h3 className="font-semibold">{cert.name}</h3>
+            {cert.issuer && <p className="text-blue-600 font-medium">{cert.issuer}</p>}
+            <p className="text-gray-600 text-sm flex items-center mt-1">
+              <Calendar className="w-4 h-4 mr-1" />
+              {cert.issue_date ? formatDate(cert.issue_date) : "N/A"}
+              {cert.credential_id && ` • ID: ${cert.credential_id}`}
+            </p>
+            {cert.credential_url && (
+              <a
+                href={cert.credential_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-blue-600 hover:text-blue-800 mt-1"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" /> View Certificate
+              </a>
+            )}
+            {cert.description && (
+              <ExpandableText text={cert.description} maxLength={300} maxLines={2} />
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+)}
 
               {/* Skills */}
               {profile.skills?.length > 0 && (

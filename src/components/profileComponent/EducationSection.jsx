@@ -74,7 +74,7 @@ export default function EducationSection({ educations = [], profile, onProfileUp
           return (
             <li
               key={edu.id ?? `${idx}-${edu.school}`}
-              className="border p-3 rounded-lg flex justify-between items-start"
+              className="hover:shadow-md border border-gray-200 p-4 rounded-lg flex justify-between items-start"
             >
               <div className="flex-1 pr-4">
                 <h4 className="font-bold">{edu.degree} in {edu.field_of_study}</h4>

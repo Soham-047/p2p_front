@@ -114,7 +114,7 @@ export default function UserProfilePage() {
   onProfileUpdate={handleProfileUpdate}
 />
       <SkillsSection skills={profile.skills} profile={profile} onProfileUpdate={handleProfileUpdate}/>
-      {/* <ProjectsSection projects={profile.projects} profile={profile} onProfileUpdate={handleProfileUpdate} /> */}
+      <ProjectsSection projects={profile.projects} profile={profile} onProfileUpdate={handleProfileUpdate} />
       <AchievementsSection certificates={profile.certificates} profile={profile} onProfileUpdate={handleProfileUpdate} />
     </div>
   );

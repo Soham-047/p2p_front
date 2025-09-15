@@ -47,7 +47,7 @@ export default function AchievementsSection({ certificates: initialCertificates 
         {certificates?.map((c) => (
           <li
             key={c.id}
-            className="border p-3 rounded-lg flex justify-between items-center"
+            className="hover:shadow-md border border-gray-200 p-4 rounded-lg flex justify-between items-center"
           >
             <div>
               <h4 className="font-bold">{c.name}</h4>
