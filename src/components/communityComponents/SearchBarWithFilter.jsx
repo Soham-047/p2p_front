@@ -9,7 +9,7 @@ export default function SearchBarWithFilter() {
         <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
         <Input
           placeholder="Search users and their posts"
-          className="pl-9 rounded-full bg-gray-100 border-0 ring-0 focus:ring-0 focus:outline-none"
+          className="pl-9 rounded-full bg-gray-200 border-0 ring-0 focus:ring-0 focus:outline-none"
         />
       </div>
       <Button variant="outline" className="flex gap-2 rounded-full">

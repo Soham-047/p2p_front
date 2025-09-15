@@ -108,7 +108,11 @@ export default function RecentPosts() {
         if (!response.ok) throw new Error("Failed to fetch posts");
         
         const allPosts = await response.json();
-        setPosts(allPosts.slice(0, 5));
+        const postsWithLikeStatus = allPosts.map(post => ({
+          ...post,
+          is_liked_by_user: false, // Add the key with a default value
+        }));
+        setPosts(postsWithLikeStatus.slice(0, 5));
 
       } catch (err) {
         setError(err.message);
