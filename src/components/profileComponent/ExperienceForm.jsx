@@ -90,6 +90,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
               onChange={handleChange}
               required
               placeholder="e.g. Software Engineer"
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
 
@@ -102,6 +103,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
               onChange={handleChange}
               required
               placeholder="e.g. Google"
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
 
@@ -113,6 +115,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
               value={form.location}
               onChange={handleChange}
               placeholder="e.g. New York, NY"
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
 
@@ -126,6 +129,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
                 value={form.start_date}
                 onChange={handleChange}
                 required
+                className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -136,6 +140,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
                 value={form.end_date}
                 onChange={handleChange}
                 placeholder="Leave empty if current"
+                className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </div>
           </div>
@@ -151,7 +156,7 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
               rows={4}
               placeholder="Describe your responsibilities and achievements..."
               className="w-full min-h-[96px] max-h-[160px] resize-none p-2 border rounded 
-                         whitespace-pre-wrap break-words break-all overflow-y-auto"
+                         whitespace-pre-wrap break-words break-all overflow-y-auto border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
 
             <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -175,4 +180,3 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
     </Dialog>
   );
 }
-

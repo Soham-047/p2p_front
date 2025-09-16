@@ -115,28 +115,28 @@ export default function EducationDialog({ education, onSaved,}) {
         <div className="space-y-3">
           <div className="flex flex-col gap-2">
             <Label>Institution Name</Label>
-            <Input name="school" value={form.school} onChange={handleChange} placeholder="Ex: IIIT Bhagalpur" />
+            <Input name="school" value={form.school} onChange={handleChange} placeholder="Ex: IIIT Bhagalpur" className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"/>
           </div>
 
           <div className="flex gap-2">
             <div className="flex-1 flex-col gap-2">
               <Label>Course</Label>
-              <Input name="degree" value={form.degree} onChange={handleChange} placeholder="Bachelor of Technology" />
+              <Input name="degree" value={form.degree} onChange={handleChange} placeholder="Bachelor of Technology"   className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"/>
             </div>
             <div className="flex-1 flex-col gap-2">
               <Label>Field of Study</Label>
-              <Input name="field_of_study" value={form.field_of_study} onChange={handleChange} placeholder="Computer Science" />
+              <Input name="field_of_study" value={form.field_of_study} onChange={handleChange} placeholder="Computer Science" className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0" />
             </div>
           </div>
 
           <div className="flex gap-2">
             <div className="flex-1 flex-col gap-2">
               <Label>Start Year</Label>
-              <Input type="number" name="start_year" value={form.start_year} onChange={handleChange} placeholder="2020" />
+              <Input type="number" name="start_year" value={form.start_year} onChange={handleChange} placeholder="2020" className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"/>
             </div>
             <div className="flex-1 flex-col gap-2">
               <Label>End Year</Label>
-              <Input type="number" name="end_year" value={form.end_year} onChange={handleChange} disabled={form.currently_studying} placeholder="2024" />
+              <Input type="number" name="end_year" value={form.end_year} onChange={handleChange} disabled={form.currently_studying} placeholder="2024"  className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0" />
             </div>
           </div>
 
@@ -151,7 +151,7 @@ export default function EducationDialog({ education, onSaved,}) {
               rows={4}
               placeholder="Describe your responsibilities and achievements..."
               className="w-full min-h-[96px] max-h-[160px] resize-none p-2 border rounded 
-                         whitespace-pre-wrap break-words break-all overflow-y-auto"
+                         whitespace-pre-wrap break-words break-all overflow-y-auto border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
 
             <div className="flex justify-between text-xs text-gray-500 mt-1">

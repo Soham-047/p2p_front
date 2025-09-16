@@ -95,6 +95,7 @@ export default function ProjectsDialog({ open, setOpen, project, onSaved }) {
               value={form.title}
               onChange={handleChange}
               placeholder="Project title"
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
 
@@ -105,6 +106,7 @@ export default function ProjectsDialog({ open, setOpen, project, onSaved }) {
               value={form.description}
               onChange={handleChange}
               placeholder="Describe the project..."
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
               rows={4}
             />
           </div>
@@ -116,18 +118,21 @@ export default function ProjectsDialog({ open, setOpen, project, onSaved }) {
               value={form.link}
               onChange={handleChange}
               placeholder="https://example.com"
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        <div className="flex gap-2 mt-3 self-end justify-between">
+         <Button variant="outline" onClick={handleClose} className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0" >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={loading}>
+          <Button type="button" onClick={handleSave} disabled={loading} className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0">
             {loading ? "Saving..." : "Save"}
           </Button>
-        </DialogFooter>
+        </div>
+          
+       
       </DialogContent>
     </Dialog>
   );

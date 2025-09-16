@@ -23,7 +23,7 @@ export default function ProfileHeader({ profile, onProfileUpdate }) {
           <img
             src={profile.banner_img_url}
             alt="Profile Banner"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-fit"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" />

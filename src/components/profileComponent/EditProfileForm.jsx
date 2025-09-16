@@ -95,8 +95,9 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
               <Input
                 type="file"
                 accept="image/*"
-                className="hidden"
+               className=" hidden border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onChange={(e) => handleFileUpload(e, "banner_img_url")}
+                
               />
             </label>
           )}
@@ -130,7 +131,7 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
               type="file"
               accept="image/*"
               id="avatarInput"
-              className="hidden"
+             className=" hidden border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
               onChange={(e) => handleFileUpload(e, "avatar_url")}
             />
             <Button
@@ -154,6 +155,7 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
             name="full_name"
             value={form.full_name}
             onChange={handleChange}
+            className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -164,6 +166,7 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
             name="headline"
             value={form.headline}
             onChange={handleChange}
+            className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -174,6 +177,7 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
             name="location"
             value={form.location}
             onChange={handleChange}
+            className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -194,8 +198,9 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
     rows={5}
     placeholder="Write something about yourself (max 200 words)"
     className="w-full min-h-[96px] max-h-[160px] resize-none p-2 border rounded 
-               whitespace-pre-wrap break-words break-all overflow-y-auto"
+               whitespace-pre-wrap break-words break-all overflow-y-auto border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
   />
+  
 
   <div className="flex justify-between text-xs text-gray-500 mt-1">
     <span>

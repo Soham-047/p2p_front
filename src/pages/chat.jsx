@@ -205,15 +205,18 @@ export default function ChatLayout({ pendingChatUser, onChatUserUsed }) {
       {/* Desktop */}
       <div className="hidden md:flex w-full">
         <Sidebar
-          onSelectChat={(username) => {
+          onSelectChat={(username,full_name) => {
             // wrap username as object
-            setActiveUser({ username, fullName: username });
+           
+            setActiveUser({ username, fullName: full_name });
             setShowChat(true);
           }}
         />
+       
+
         {showChat && activeUser ? (
           <ChatBox
-            key={activeUser.username} // ✅ force remount on user change
+            key={activeUser.username} 
             username={activeUser.username}
             fullName={activeUser.fullName}
             onBack={() => setShowChat(false)}
@@ -234,8 +237,8 @@ export default function ChatLayout({ pendingChatUser, onChatUserUsed }) {
       <div className="flex md:hidden w-full">
         {!showChat ? (
           <Sidebar
-            onSelectChat={(username) => {
-              setActiveUser({ username, fullName: username });
+            onSelectChat={(username,full_name) => {
+              setActiveUser({ username, fullName: full_name });
               setShowChat(true);
             }}
           />

@@ -75,6 +75,7 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
               value={form.name}
               onChange={handleChange}
               required
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Input
               name="issuer"
@@ -82,6 +83,7 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
               value={form.issuer}
               onChange={handleChange}
               required
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Input
               type="date"
@@ -89,18 +91,21 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
               value={form.issue_date}
               onChange={handleChange}
               required
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Input
               name="credential_id"
               placeholder="Credential ID"
               value={form.credential_id}
               onChange={handleChange}
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Input
               name="credential_url"
               placeholder="Credential URL"
               value={form.credential_url}
               onChange={handleChange}
+              className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
 
             <div className="flex justify-end pt-4 gap-2">
@@ -119,4 +124,3 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
     </Dialog.Root>
   );
 }
-

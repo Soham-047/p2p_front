@@ -104,4 +104,3 @@ export default function SkillsSection({ skills: initialSkills = [], profile, onP
     </div>
   );
 }
-

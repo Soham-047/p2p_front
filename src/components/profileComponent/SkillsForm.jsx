@@ -88,14 +88,16 @@ export default function SkillDialog({ skill, onSaved, children }) {
           <div className="flex flex-col gap-2">
             <Label htmlFor="name">Skill Name</Label>
             <Input
-              id="name"
-              name="name"
-              placeholder="e.g. React.js"
-              value={form.name}
-              onChange={handleChange}
-              disabled={loading}
-              autoFocus
-            />
+  id="name"
+  name="name"
+  placeholder="e.g. React.js"
+  value={form.name}
+  onChange={handleChange}
+  disabled={loading}
+  autoFocus
+  className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+ />
+
           </div>
 
           {/* Level */}
@@ -109,7 +111,7 @@ export default function SkillDialog({ skill, onSaved, children }) {
               disabled={loading}
             >
               <SelectTrigger id="level">
-                <SelectValue placeholder="Select level" />
+                <SelectValue placeholder="Select level" className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 <SelectItem value="Beginner">Beginner</SelectItem>
