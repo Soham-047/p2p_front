@@ -66,7 +66,7 @@ export default function CreatePostCard({ onPostCreated }) {
   
   // ✅ New state for media dropdown
   const [showMediaDropdown, setShowMediaDropdown] = useState(false);
-
+  const isUploading = mediaItems.some(item => item.progress < 100 && !item.url);
   const editorRef = useRef(null);
   const dropdownRef = useRef(null);
   const mediaDropdownRef = useRef(null);
@@ -509,7 +509,7 @@ export default function CreatePostCard({ onPostCreated }) {
 
             <Button 
               onClick={handlePostSubmit} 
-              disabled={isSubmitting || !title.trim() || !editorRef.current?.textContent?.trim() || !user} 
+              disabled={isSubmitting || !title.trim() || !editorRef.current?.textContent?.trim() || !user || isUploading} 
               className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 py-1 h-auto text-sm disabled:bg-indigo-300 transition-colors"
             >
               {isSubmitting ? "Posting..." : "Post"}

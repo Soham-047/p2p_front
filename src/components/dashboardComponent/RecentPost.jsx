@@ -112,7 +112,7 @@ export default function RecentPosts() {
           ...post,
           is_liked_by_user: false, // Add the key with a default value
         }));
-        setPosts(postsWithLikeStatus.slice(0, 5));
+        setPosts(postsWithLikeStatus.slice(0, 10));
 
       } catch (err) {
         setError(err.message);

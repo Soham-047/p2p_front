@@ -82,6 +82,11 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
     }, 100);
   };
 
+  const handleViewProfileClick = () => {
+    onOpenChange(false); // Close the dialog first
+    navigate(`/users/${profile.username}`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-0 bg-white rounded-lg shadow-lg">
@@ -113,6 +118,9 @@ const ProfileDialog = ({ open, onOpenChange, profile, onMessageClick }) => {
                 <Button onClick={handleMessageClick} className="rounded-full">
                   Message
                 </Button>
+                <Button onClick={handleViewProfileClick} variant="outline" className="rounded-full">
+                    View Post
+                  </Button>
               </div>
 
               {/* Summary */}

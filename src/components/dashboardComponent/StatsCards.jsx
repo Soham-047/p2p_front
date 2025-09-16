@@ -17,18 +17,16 @@ export default function StatsSection() {
           <h1 className="text-2xl font-semibold">
             Hello,{" "}
             <span className="text-purple-700 font-bold">
-              {user?.username  } {/* 👈 dynamic username */}
+              {user?.full_name  } {/* 👈 dynamic username */}
             </span>
           </h1>
-          <p className="text-gray-500 text-sm">
-            Track your progress, access resources, manage tasks, and get insights
-          </p>
+          <p className="text-gray-500">Welcome back! Here's what's happening.</p>
         </div>
-        <div className="flex gap-4 mt-4 md:mt-0">
+        {/* <div className="flex gap-4 mt-4 md:mt-0">
           <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 cursor-pointer">🔔</div>
           <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 cursor-pointer">📅</div>
           <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 cursor-pointer">👤</div>
-        </div>
+        </div> */}
       </div>
 
       {/* Stats Cards
