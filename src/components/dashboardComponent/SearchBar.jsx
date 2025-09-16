@@ -13,6 +13,24 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+function formatTimeAgo(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const seconds = Math.floor((new Date() - date) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + "y ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + "mo ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + "d ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + "h ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + "m ago";
+  return Math.floor(seconds) + "s ago";
+}
+
+
 const SearchBar = ({ onMessageClick }) => {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("people");
@@ -147,6 +165,17 @@ const SearchBar = ({ onMessageClick }) => {
     }
   };
 
+   const handleUserClick = (username) => {
+    if (username) navigate(`/users/${username}`);
+  };
+
+
+  const handlePostClick = (slug) => {
+    if (slug) {
+      navigate(`/posts/${slug}`);
+    }
+  };
+
   // ⏳ Debounce search
   useEffect(() => {
     if (query.length <= 2) {
@@ -162,6 +191,8 @@ const SearchBar = ({ onMessageClick }) => {
     }, 300);
     return () => clearTimeout(handler);
   }, [query, activeTab, searchUsers, searchPosts]);
+
+  
 
   return (
     <div className="w-full mx-auto p-4 border-1 border-gray-50 shadow-sm">
@@ -216,11 +247,12 @@ const SearchBar = ({ onMessageClick }) => {
           searchResults.map((user, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg p-4 hover:shadow-md transition-shadow"
+              onClick={() => handlePostClick(user.slug)}
+              className="bg-white rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-start gap-4">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={user.avatar || "/placeholder-avatar.jpg"} />
+                  <AvatarImage src={user.avatar_url || "/placeholder-avatar.jpg"} />
                   <AvatarFallback className="text-lg">
                     {user.username?.charAt(0).toUpperCase()}
                   </AvatarFallback>
@@ -258,12 +290,12 @@ const SearchBar = ({ onMessageClick }) => {
                     >
                       View Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem
+                    {/* <DropdownMenuItem
                       onClick={() => console.log("View posts", user.username)}
                       className="text-[17px] text-gray-700 hover:bg-gray-100"
                     >
                       View Posts
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -271,32 +303,40 @@ const SearchBar = ({ onMessageClick }) => {
           ))}
 
         {activeTab === "posts" &&
-          searchResults.map((post, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start gap-4">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage
-                    src={post.author?.avatar || "/placeholder-avatar.jpg"}
-                  />
-                  <AvatarFallback className="text-sm">
-                    {post.author?.username?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+          searchResults.map((post) => (
+            <div key={post.slug} className="bg-white rounded-lg p-4 border hover:shadow-md transition-shadow">
+              
+              {/* Author Information */}
+              <div 
+                className="flex items-center gap-3 mb-3 cursor-pointer"
+                onClick={() => handleUserClick(post.author.username)}
+              >
+                <Avatar className="w-10 h-10">
+                  {/* FIXED: Changed author.avatar to author.avatar_url */}
+                  <AvatarImage src={post.author?.avatar_url || "/placeholder-avatar.jpg"} />
+                  <AvatarFallback>{post.author?.full_name?.charAt(0)}</AvatarFallback>
                 </Avatar>
-
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{post.title}</h3>
-                  <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                    {post.content || "No content"}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    By {post.author?.full_name || post.author?.username} •{" "}
-                    {new Date(post.created_at).toLocaleDateString()}
-                  </p>
+                <div>
+                  <p className="font-semibold text-gray-900">{post.author?.full_name}</p>
+                  <p className="text-sm text-gray-500">{post.author?.headline}</p>
                 </div>
               </div>
+
+              {/* Post Content */}
+              <div 
+                className="cursor-pointer"
+                onClick={() => handlePostClick(post.slug)}
+              >
+                <h3 className="font-bold text-lg text-gray-800 hover:text-blue-600 transition-colors">{post.title}</h3>
+                {/* <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                  {post.content || "No content"}
+                </p> */}
+              </div>
+
+              {/* Post Footer
+              <p className="text-gray-400 text-xs mt-3">
+                Posted {formatTimeAgo(post.created_at)}
+              </p> */}
             </div>
           ))}
       </div>

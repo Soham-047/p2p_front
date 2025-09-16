@@ -10,7 +10,10 @@ import CommunityPage from "./pages/CommunityPage";
 import Sidebar from "@/components/Sidebar";
 import ProfilePage from "./pages/ProfilPage";
 import ChatLayout from "./pages/chat";
-
+import AllMyPostsPage from "./pages/AllMyPostsPage";
+import PublicProfilePage from "./pages/PublicProfilePage";
+import TagSearchPage from "./pages/TagSearchPage";
+import SinglePostPage from "./pages/SinglePostPage";
 // Helper to read cookie by name
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -121,6 +124,38 @@ export default function App() {
           )
         }
       />
+
+      <Route
+        path="/my-all-posts"
+        element={
+          isLoggedIn ? (
+            <Layout>
+              <div className="p-2 md:p-6 pt-10 md:pt-6">
+                <AllMyPostsPage />
+              </div>
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/users/:username"
+        element={
+          isLoggedIn ? ( <Layout><PublicProfilePage /></Layout> ) : ( <Navigate to="/login" /> )
+        }
+      />
+      <Route
+        path="/tags/:tagName"
+        element={
+          isLoggedIn ? ( <Layout><TagSearchPage /></Layout> ) : ( <Navigate to="/login" /> )
+        }
+      />
+      <Route
+        path="/posts/:slug"
+        element={isLoggedIn ? <Layout><SinglePostPage /></Layout> : <Navigate to="/login" replace />}
+      />
+
     </Routes>
   );
 }

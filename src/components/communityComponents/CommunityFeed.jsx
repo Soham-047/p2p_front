@@ -167,6 +167,7 @@ export default function CommunityFeed() {
   const handlePostCreated = () => {
     fetchFeedData();
   };
+  
 
   if (loading && posts.length === 0) {
     return <p className="text-center mt-8">Loading feed...</p>;
@@ -187,6 +188,7 @@ export default function CommunityFeed() {
           post={post} 
           currentUser={currentUser}
           currentUserAvatar={currentUserAvatar} // यह अब एक URL string (या null) होगी
+          onPostUpdated={handlePostCreated}
         />
       ))}
     </div>

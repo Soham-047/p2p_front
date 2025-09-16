@@ -1,5 +1,5 @@
 
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ThumbsUp, Reply, Trash2, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DOMPurify from 'dompurify';
 import SearchProfile from "./SearchProfile";
 import { ChevronLeft, ChevronRight, X, Expand, Play, Pause, Volume2, VolumeX } from 'lucide-react';
-
+import EditPostModal from "./EditPostModal";
+import axios from "axios";
+import ProfileDialog from "../dashboardComponent/ProfileDailog";
+import { Link } from 'react-router-dom';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function getCookie(name) {
@@ -527,7 +530,7 @@ function MediaCarousel({ mediaItems = [] }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mediaError, setMediaError] = useState({});
   const [videoStates, setVideoStates] = useState({});
-  
+
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -537,9 +540,9 @@ function MediaCarousel({ mediaItems = [] }) {
     const currentItem = mediaItems[currentIndex];
     if (isVideo(currentItem)) {
       const currentState = videoStates[currentIndex] || { playing: true, muted: true };
-      
+
       videoElement.muted = currentState.muted;
-      
+
       if (currentState.playing) {
         videoElement.play().catch(error => {
           console.warn("Autoplay was prevented by the browser.", error);
@@ -549,7 +552,7 @@ function MediaCarousel({ mediaItems = [] }) {
         videoElement.pause();
       }
     }
-    
+
     return () => {
       if (videoElement) {
         videoElement.pause();
@@ -590,10 +593,10 @@ function MediaCarousel({ mediaItems = [] }) {
   const toggleVideoPlay = (index) => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
-    
+
     if (videoElement.paused) {
       videoElement.play();
-      if(videoElement.muted) {
+      if (videoElement.muted) {
         videoElement.muted = false;
       }
       // When user manually plays, we assume they want sound.
@@ -613,7 +616,7 @@ function MediaCarousel({ mediaItems = [] }) {
     videoElement.muted = newMutedState;
     setVideoStates(prev => ({ ...prev, [index]: { ...prev[index], muted: newMutedState } }));
   };
-  
+
   const renderMediaItem = (item, index, isFullscreenView = false) => {
     const currentVideoState = videoStates[index] || { playing: true, muted: true };
 
@@ -630,7 +633,7 @@ function MediaCarousel({ mediaItems = [] }) {
       return (
         <div className="relative w-full h-full group/video">
           <video src={item.url} className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40" muted loop autoPlay playsInline aria-hidden="true" />
-          
+
           <video
             ref={videoRef}
             src={item.url}
@@ -642,7 +645,7 @@ function MediaCarousel({ mediaItems = [] }) {
             onClick={(e) => {
               if (!isFullscreenView) openFullscreen();
               else {
-                e.stopPropagation(); 
+                e.stopPropagation();
                 toggleVideoPlay(index);
               }
             }}
@@ -654,7 +657,7 @@ function MediaCarousel({ mediaItems = [] }) {
               setVideoStates(prev => ({ ...prev, [index]: { ...(prev[index] || {}), playing: false } }));
             }}
           />
-          
+
           {!isFullscreenView && (
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
               <button
@@ -669,7 +672,7 @@ function MediaCarousel({ mediaItems = [] }) {
               </button>
             </div>
           )}
-          
+
           {!isFullscreenView && (
             <button
               onClick={(e) => {
@@ -693,7 +696,7 @@ function MediaCarousel({ mediaItems = [] }) {
       </>
     );
   };
-  
+
   return (
     <>
       <div className="relative w-full bg-gray-900 rounded-xl overflow-hidden mb-4 group">
@@ -767,8 +770,8 @@ function MediaCarousel({ mediaItems = [] }) {
 
 
 // ------------------ PostCard Component ------------------
-export default function PostCard({ post, currentUser, currentUserAvatar }) {
-   const {
+export default function PostCard({ post, currentUser, currentUserAvatar, onPostUpdated }) {
+  const {
     author_full_name,
     author_username,
     headline,
@@ -795,17 +798,23 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
- 
+
   const [isSharing, setIsSharing] = useState(false);
-  
+
   const [openProfile, setOpenProfile] = useState(false);
   const [selectedUsername, setSelectedUsername] = useState(null);
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-   useEffect(() => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+
+  useEffect(() => {
     setIsLiked(is_liked_by_user || false);
   }, [is_liked_by_user]);
+
+  const isOwnPost = currentUser?.username === post.author_username;
 
   const authToken = getCookie("token");
 
@@ -971,14 +980,38 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
       setIsSharing(false);
     }
   };
+
+  const handleDelete = async () => {
+    // Show a confirmation dialog before deleting
+    if (!window.confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
+    console.log("Attempting to delete post with slug:", post.slug);
+
+    const authToken = getCookie("token");
+    try {
+      await axios.delete(`${API_BASE_URL}/api/posts-app/posts/${post.slug}/`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      alert("Post deleted successfully.");
+      if (onPostUpdated) {
+        onPostUpdated();
+      }// Refresh the list on the parent page
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      alert("Failed to delete post.");
+    }
+  };
+
+
   const CONTENT_LIMIT = 250; // Aap is limit ko apni zaroorat ke hisaab se badal sakte hain
   const isContentLong = content.length > CONTENT_LIMIT;
-  
+
   // Decide karein ki kitna content dikhana hai
   const displayedContent = isExpanded ? content : `${content.slice(0, CONTENT_LIMIT)}`;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 mb-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 mb-4 relative">
       {/* Post Header */}
       <div className="p-4 pb-3">
         <div className="flex justify-between items-start">
@@ -1004,9 +1037,38 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
               {headline && <p className="text-sm text-gray-600">{headline}</p>}
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
-            <MoreHorizontal size={16} />
-          </Button>
+
+          {isOwnPost && (
+            <div className="relative">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-800" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <MoreHorizontal size={16} />
+              </Button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-20">
+                  <ul className="py-1">
+                    <li>
+                      <button
+                        onClick={() => { setIsEditing(true); setIsMenuOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Edit Post
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={handleDelete}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Delete Post
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -1042,25 +1104,24 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
         )}
 
         {/* This block now only renders the tags if they exist */}
-{tag_names && tag_names.length > 0 && (
-  <div className="mt-3 flex flex-wrap gap-2">
-    {tag_names.map((tag, index) => (
-      <span
-        key={index}
-        className="text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer bg-blue-50 px-2 py-1 rounded-full hover:bg-blue-100 transition-colors"
-      >
-        #{tag}
-      </span>
-    ))}
-  </div>
-)}
+        {tag_names && tag_names.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tag_names.map((tag, index) => (
+              <Link key={index} to={`/tags/${tag}`}>
+                <span className="text-sm font-medium text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-full transition-colors">
+                  #{tag}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
 
-{/* This separate block renders the media carousel if it exists */}
-{media_items && media_items.length > 0 && (
-  <div className="mt-4"> {/* Added a little margin for spacing */}
-    <MediaCarousel mediaItems={media_items} />
-  </div>
-)}
+        {/* This separate block renders the media carousel if it exists */}
+        {media_items && media_items.length > 0 && (
+          <div className="mt-4"> {/* Added a little margin for spacing */}
+            <MediaCarousel mediaItems={media_items} />
+          </div>
+        )}
       </div>
 
       {/* Engagement Stats */}
@@ -1094,13 +1155,11 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
               size="sm"
               onClick={toggleLike}
               disabled={isLikeStatusLoading}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ${
-                isLiked
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ${isLiked
                   ? "text-red-500 bg-red-50 hover:bg-red-100"
                   : "text-gray-600 hover:bg-gray-100 hover:text-red-500"
-              } ${
-                isLikeStatusLoading ? "cursor-not-allowed opacity-50" : ""
-              }`}
+                } ${isLikeStatusLoading ? "cursor-not-allowed opacity-50" : ""
+                }`}
             >
               <Heart className={`w-5 h-5 transition-all duration-200 ${isLiked ? "fill-red-500 scale-110" : ""}`} />
               <span className="text-sm font-medium">{isLiked ? "Liked" : "Like"}</span>
@@ -1199,6 +1258,17 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
         </div>
       )}
 
+
+      <EditPostModal
+        post={post}
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        onPostUpdated={() => {
+          setIsEditing(false);
+          if (onPostUpdated) onPostUpdated();
+        }}
+      />
+
       {/* Custom Scrollbar and Animations */}
       <style jsx>{`
         .custom-scrollbar {
@@ -1235,6 +1305,7 @@ export default function PostCard({ post, currentUser, currentUserAvatar }) {
           animation: slide-in-from-top 0.2s ease-out;
         }
       `}</style>
+
     </div>
   );
 }
