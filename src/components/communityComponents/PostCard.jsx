@@ -1300,7 +1300,7 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
       setMainMentionedUsers([]);
       setCommentCount(c => c + 1);
       fetchComments();
-    } catch (err) {
+    } catch {
       alert("Error posting comment.");
     } finally {
       setIsSubmittingComment(false);
