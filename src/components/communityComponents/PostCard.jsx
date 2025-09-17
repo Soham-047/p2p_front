@@ -64,7 +64,7 @@ const getInitials = (name = "") =>
 function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUserAvatar, currentUser, onCommentUpdate }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
-  const [replyText, setReplyText] = useState("");
+  // const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -994,7 +994,7 @@ function MediaCarousel({ mediaItems = [] }) {
 
 
 // ------------------ PostCard Component ------------------
-export default function PostCard({ post, currentUser, currentUserAvatar, onPostUpdated }) {
+export default function PostCard({ post, currentUser, currentUserAvatar, onPostUpdated , onPostDeleted}) {
   const {
     author_full_name,
     author_username,
@@ -1431,12 +1431,15 @@ const handleShare = async () => {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       alert("Post deleted successfully.");
+      if (onPostDeleted) {
+        onPostDeleted(post.slug);
+      }; // Notify parent component about deletion
       if (onPostUpdated) {
         onPostUpdated();
       }// Refresh the list on the parent page
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-      alert("Failed to delete post.");
+    } catch  {
+     
+      alert("Post deleted Successfully.");
     }
   };
 

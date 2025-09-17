@@ -4,6 +4,7 @@ import SearchBarWithFilter from "./SearchBarWithFilter";
 import CreatePostCard from "./CreatePostCard";
 import PostCard from "./PostCard";
 
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function getCookie(name) {
@@ -96,6 +97,10 @@ export default function CommunityFeed() {
     // हटाया गया: cleanup function की अब ज़रूरत नहीं है क्योंकि हम createObjectURL का इस्तेमाल नहीं कर रहे।
   }, [fetchFeedData]);
 
+  const handlePostDeleted = (slug) => {
+    setPosts((prev) => prev.filter((p) => p.slug !== slug));
+  };
+  
   const handlePostCreated = () => {
     fetchFeedData();
   };
@@ -121,6 +126,7 @@ export default function CommunityFeed() {
           currentUser={currentUser}
           currentUserAvatar={currentUserAvatar} // यह अब एक URL string (या null) होगी
           onPostUpdated={handlePostCreated}
+          onPostDeleted={handlePostDeleted}
         />
       ))}
     </div>
