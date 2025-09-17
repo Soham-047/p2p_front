@@ -133,7 +133,7 @@ export default function Sidebar({ onSelectChat }) {
 const handleSelectUser = (user) => {
   setSelectedChat(null);
   if (onSelectChat) {
-    onSelectChat(user.username, user.full_name || user.username);
+    onSelectChat(user.username, user.full_name || user.username ,user.avatar_url);
   }
   setQuery("");
   setSearchResults([]);
@@ -146,7 +146,8 @@ const handleSelectConversation = (conversation) => {
   if (onSelectChat) {
     onSelectChat(
       conversation.other_user.username,
-      conversation.other_user.full_name || conversation.other_user.username
+      conversation.other_user.full_name || conversation.other_user.username,
+      conversation.other_user.avatar_url
     );
   }
 };
@@ -255,7 +256,6 @@ const handleSelectConversation = (conversation) => {
           )}
 
           {/* Existing Conversations */}
-         {/* Existing Conversations */}
          {!isSearchMode &&
   conversations.map((c) => {
     const displayName = c.other_user.full_name || c.other_user.username;

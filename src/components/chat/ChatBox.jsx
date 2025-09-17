@@ -31,7 +31,7 @@ function formatDateLabel(dateStr) {
   });
 }
 
-export default function ChatBox({ onBack, username, fullName }) {
+export default function ChatBox({ onBack, username, fullName, avatar_url }) {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +104,7 @@ export default function ChatBox({ onBack, username, fullName }) {
 
   // ✅ Load older messages on scroll top
   const loadOlderMessages = useCallback(async () => {
+
     if (!username || loadingMore || !hasMore) return;
 
     const token = document.cookie
@@ -294,6 +295,7 @@ export default function ChatBox({ onBack, username, fullName }) {
           username={username}
           fullName={fullName}
           isOnline={isOnline}
+          avatar_url={avatar_url}
         />
 
         {/* Messages */}
@@ -321,6 +323,8 @@ export default function ChatBox({ onBack, username, fullName }) {
                   key={msg.id}
                   {...msg}
                   senderName={msg.sender === "other" ? fullName || "User" : "Me"}
+                  avatar_url={avatar_url}
+                  meurl={user.avatar_url}
                 />
               ))}
             </div>

@@ -2,7 +2,7 @@ import { ArrowLeft, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function ChatHeader({ onBack, username, fullName, isOnline }) {
+export default function ChatHeader({ onBack, username, fullName, isOnline, avatar_url }) {
   return (
     <div className="flex items-center justify-between p-4 bg-white sticky top-0 z-10 border-b border-b-gray-200">
       <div className="flex items-center gap-3">
@@ -16,13 +16,16 @@ export default function ChatHeader({ onBack, username, fullName, isOnline }) {
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
-
         <Avatar className="h-10 w-10">
-          <AvatarImage src="https://i.pravatar.cc/150?img=12" alt={fullName || username} />
-          <AvatarFallback>
-            {(fullName || username)?.[0]?.toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+ {avatar_url&& <AvatarImage
+    src={avatar_url || `https://i.pravatar.cc/150?u=${username}`}
+    alt={fullName || username}
+  />}
+  <AvatarFallback>
+    {(fullName || username)?.[0]?.toUpperCase()}
+  </AvatarFallback>
+</Avatar>
+
 
         <div className="leading-tight">
           <h2 className="font-semibold text-gray-900 text-sm md:text-base">
