@@ -20,76 +20,8 @@ export default function CommunityFeed() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserAvatar, setCurrentUserAvatar] = useState("");
 
-  // const fetchFeedData = useCallback(async () => {
-  //   const authToken = getCookie('token');
-  //   if (!authToken) {
-  //     setError("You are not logged in.");
-  //     setLoading(false);
-  //     return;
-  //   }
-  //   try {
-  //     setLoading(true);
-      
-  //     // बदला गया: अब सिर्फ 2 API calls होंगी। avatar वाली call हटा दी गई है।
-  //     const [postsRes, profileRes] = await Promise.all([
-  //       fetch(`${API_BASE_URL}/api/posts-app/posts/`, {
-  //         headers: { "Authorization": `Bearer ${authToken}` },
-  //       }),
-  //       fetch(`${API_BASE_URL}/api/users-app/profile/me/`, {
-  //         headers: { "Authorization": `Bearer ${authToken}` },
-  //       }),
-  //     ]);
-
-  //     if (!postsRes.ok) throw new Error(`HTTP error! Status: ${postsRes.status}`);
-      
-  //     let postsData = await postsRes.json();
-
-  //      if (postsData && postsData.length > 0) {
-  //       // 1. Collect all post slugs
-  //       const postSlugs = postsData.map(post => post.slug);
-       
-
-  //       // 2. Fetch the like statuses for all collected slugs in one go
-  //       const likeStatusRes = await fetch(`${API_BASE_URL}/api/posts-app/posts/like-statuses/`, {
-  //           method: 'POST',
-  //           headers: {
-  //               'Authorization': `Bearer ${authToken}`,
-  //               'Content-Type': 'application/json',
-  //           },
-  //           body: JSON.stringify({ post_slugs: postSlugs }),
-  //       });
-
-  //       if (likeStatusRes.ok) {
-  //           const likeStatuses = await likeStatusRes.json(); 
-  //           // Expected response: { "slug-1": true, "slug-2": false, ... }
-            
-  //           // 3. Merge the like status into each post object
-  //           postsData = postsData.map(post => ({
-  //               ...post,
-  //               is_liked_by_user: likeStatuses[post.slug] || false, // Add the new property
-  //           }));
-  //       }
-  //     }
-  //     setPosts(postsData);
-
-  //     if (profileRes.ok) {
-  //       const profileData = await profileRes.json();
-  //       setCurrentUser(profileData);
-        
-  //       // बदला गया: avatar_url को सीधे profileData से सेट करें
-  //       setCurrentUserAvatar(profileData.avatar_url); 
-  //     }
-      
-  //     // हटाया गया: avatarRes.ok वाला पूरा ब्लॉक हटा दिया गया है क्योंकि उसकी अब ज़रूरत नहीं।
-
-  //   } catch (e) {
-  //     setError(e.message);
-  //     console.error("Failed to fetch feed data:", e);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []); // बदला गया: currentUserAvatar की dependency हटा दी गई है
-    const fetchFeedData = useCallback(async () => {
+ 
+  const fetchFeedData = useCallback(async () => {
     const authToken = getCookie('token');
     if (!authToken) {
       setError("You are not logged in.");

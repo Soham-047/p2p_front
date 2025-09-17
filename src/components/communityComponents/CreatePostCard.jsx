@@ -293,24 +293,106 @@ export default function CreatePostCard({ onPostCreated }) {
   };
 
   // ✅ Handle file upload with specific type
+  // const handleFileUpload = async (acceptType) => {
+  //   const files = await new Promise((resolve) => {
+  //     const input = document.createElement('input');
+  //     input.type = 'file';
+  //     input.accept = acceptType;
+  //     input.multiple = true;
+      
+  //     input.onchange = (e) => {
+  //       resolve(Array.from(e.target.files));
+  //     };
+      
+  //     input.click();
+  //   });
+
+  //   if (!files.length) return;
+  //   setShowMediaDropdown(false);
+
+  //   files.forEach(async (file, index) => {
+  //     const tempId = Date.now() + index;
+  //     setMediaItems((prev) => [
+  //       ...prev,
+  //       { 
+  //         id: tempId, 
+  //         url: "", 
+  //         media_type: file.type.startsWith("video") ? "video" : "image", 
+  //         progress: 0 
+  //       }
+  //     ]);
+
+  //     try {
+  //       const url = await uploadToCloudinary(file, (percent) => {
+  //         setMediaItems((prev) =>
+  //           prev.map((m) =>
+  //             m.id === tempId ? { ...m, progress: percent } : m
+  //           )
+  //         );
+  //       });
+
+  //       setMediaItems((prev) =>
+  //         prev.map((m) =>
+  //           m.id === tempId
+  //             ? { ...m, url, progress: 100, display_order: prev.length }
+  //             : m
+  //         )
+  //       );
+  //     } catch (err) {
+  //       alert("Upload failed: " + err.message);
+  //       setMediaItems((prev) => prev.filter((m) => m.id !== tempId));
+  //     }
+  //   });
+  // };
   const handleFileUpload = async (acceptType) => {
     const files = await new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = acceptType;
       input.multiple = true;
-      
       input.onchange = (e) => {
         resolve(Array.from(e.target.files));
       };
-      
       input.click();
     });
 
     if (!files.length) return;
     setShowMediaDropdown(false);
 
-    files.forEach(async (file, index) => {
+    // --- ✅ 1. CHECK TOTAL ITEM LIMIT ---
+    const MAX_TOTAL_ITEMS = 6;
+    if (mediaItems.length + files.length > MAX_TOTAL_ITEMS) {
+      alert(`You can only upload a maximum of ${MAX_TOTAL_ITEMS} photos and videos in total.`);
+      return; // Stop the function
+    }
+
+    // --- ✅ 2. CHECK VIDEO FILE SIZE ---
+    const MAX_VIDEO_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+    
+    const validFiles = [];
+    const oversizedFiles = [];
+
+    // Separate valid files from oversized ones
+    for (const file of files) {
+      if (file.type.startsWith("video") && file.size > MAX_VIDEO_SIZE_BYTES) {
+        oversizedFiles.push(file.name); // Keep track of the names of large videos
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    // --- ✅ 3. SHOW ERROR FOR LARGE VIDEOS ---
+    if (oversizedFiles.length > 0) {
+      alert(`The following videos are larger than ${MAX_VIDEO_SIZE_MB}MB and will not be uploaded:\n- ${oversizedFiles.join("\n- ")}`);
+    }
+
+    // If no valid files are left after filtering, stop here.
+    if (!validFiles.length) return;
+
+
+    // --- ✅ 4. UPLOAD ONLY THE VALID FILES ---
+    validFiles.forEach(async (file, index) => {
       const tempId = Date.now() + index;
       setMediaItems((prev) => [
         ...prev,
@@ -334,7 +416,7 @@ export default function CreatePostCard({ onPostCreated }) {
         setMediaItems((prev) =>
           prev.map((m) =>
             m.id === tempId
-              ? { ...m, url, progress: 100, display_order: prev.length }
+              ? { ...m, url, progress: 100 }
               : m
           )
         );
@@ -343,7 +425,7 @@ export default function CreatePostCard({ onPostCreated }) {
         setMediaItems((prev) => prev.filter((m) => m.id !== tempId));
       }
     });
-  };
+};
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -422,7 +504,7 @@ export default function CreatePostCard({ onPostCreated }) {
                       <AvatarFallback className="text-xs">{getInitials(u.full_name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">@{u.username}</p>
+                      {/* <p className="text-sm font-medium">@{u.username}</p> */}
                       <p className="text-xs text-gray-500">{u.full_name}</p>
                     </div>
                   </div>

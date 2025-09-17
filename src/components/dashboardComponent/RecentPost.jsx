@@ -76,7 +76,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import PostCard from "../communityComponents/PostCard"; // 1. Import your main PostCard component
+import PostCard from "../communityComponents/PostCard";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -90,9 +90,11 @@ export default function RecentPosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserAvatar, setCurrentUserAvatar] = useState(null);
 
   useEffect(() => {
-    const fetchRecentPosts = async () => {
+    const fetchRecentPostData = async () => {
       const authToken = getCookie('token');
       if (!authToken) {
         setError("Not authenticated");
@@ -101,18 +103,60 @@ export default function RecentPosts() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/posts-app/posts/`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
+        setLoading(true);
 
-        if (!response.ok) throw new Error("Failed to fetch posts");
-        
-        const allPosts = await response.json();
-        const postsWithLikeStatus = allPosts.map(post => ({
-          ...post,
-          is_liked_by_user: false, // Add the key with a default value
-        }));
-        setPosts(postsWithLikeStatus.slice(0, 10));
+        // STEP 1: Fetch initial posts and user profile.
+        const [postsRes, profileRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/posts-app/posts/`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          fetch(`${API_BASE_URL}/api/users-app/profile/me/`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+        ]);
+
+        if (!postsRes.ok) throw new Error("Failed to fetch posts");
+        let postsData = await postsRes.json();
+
+        // STEP 2: If posts exist, fetch their like statuses in a single batch request.
+        if (postsData && postsData.length > 0) {
+          let likeStatuses = {};
+          try {
+            const postSlugs = postsData.map(post => post.slug);
+            const likeStatusRes = await fetch(`${API_BASE_URL}/api/posts-app/posts/like-statuses/`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ post_slugs: postSlugs }),
+            });
+
+            if (likeStatusRes.ok) {
+              likeStatuses = await likeStatusRes.json();
+            } else {
+              console.error("Failed to fetch like statuses for recent posts.");
+            }
+          } catch (err) {
+            console.error("Error fetching like statuses:", err);
+          }
+          
+          // STEP 3: Merge the like statuses back into the posts.
+          postsData = postsData.map(post => ({
+            ...post,
+            is_liked_by_user: likeStatuses[post.slug] || false,
+          }));
+        }
+
+        // Set the state with the merged data, showing only the top 10.
+        setPosts(postsData.slice(0, 10));
+
+        // Set the current user data for commenting.
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setCurrentUser(profileData);
+          setCurrentUserAvatar(profileData.avatar_url);
+        }
 
       } catch (err) {
         setError(err.message);
@@ -121,7 +165,7 @@ export default function RecentPosts() {
       }
     };
 
-    fetchRecentPosts();
+    fetchRecentPostData();
   }, []);
 
   if (loading) return <p>Loading recent posts...</p>;
@@ -136,10 +180,14 @@ export default function RecentPosts() {
         </Link>
       </div>
       
-      {/* 2. Map over the posts and render the full PostCard for each one */}
       <div className="space-y-4">
         {posts.map((post) => (
-          <PostCard key={post.slug} post={post} />
+          <PostCard 
+            key={post.slug} 
+            post={post} 
+            currentUser={currentUser}
+            currentUserAvatar={currentUserAvatar}
+          />
         ))}
       </div>
     </div>

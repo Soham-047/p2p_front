@@ -19,6 +19,22 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
+const apiClient = {
+  async request(method, url) {
+    const headers = { 'Content-Type': 'application/json' };
+    const config = { method, headers };
+    const authToken = getCookie("token");
+    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+    const fullUrl = `${API_BASE_URL}${url}`;
+    const response = await fetch(fullUrl, config);
+    if (!response.ok) throw new Error(await response.text());
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
+  },
+  get: (url) => apiClient.request("GET", url),
+};
+
 function formatTimeAgo(dateString) {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -58,6 +74,15 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
   const [selectedUsername, setSelectedUsername] = useState(null);
+
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionResults, setMentionResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(null);
+  const [mentionedUsers, setMentionedUsers] = useState([]);
+  const editorRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const isInsertingMention = useRef(false);
   //const [replyCount, setReplyCount] = useState(0);
 
   // Only show likes for main comments (depth === 0)
@@ -85,63 +110,50 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
     fetchCommentLikes();
   }, [comment.slug, authToken]);
 
-  // useEffect(() => {
-  //   const fetchReplyCount = async () => {
-  //     if (!authToken || !comment.slug) return;
 
-  //     try {
-  //       const response = await fetch(
-  //         `${API_BASE_URL}/api/posts-app/comments/${comment.slug}/reply-count/`,
-  //         { headers: { Authorization: `Bearer ${authToken}` } }
-  //       );
 
-  //       if (response.ok) {
-  //         const data = await response.json();
-  //         // if (data.count > 0) {
-  //         //   setReplies(new Array(data.count).fill({})); // Placeholder for reply count
-  //         // }
-  //         setReplyCount(data.count || 0);
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to fetch reply count:", error);
-  //     }
-  //   };
+  useEffect(() => {
+    // When the reply box opens...
+    if (isReplying && editorRef.current) {
+      const username = comment.author_username;
+      const fullName = comment.author_full_name;
 
-  //   fetchReplyCount();
-  // }, [comment.slug, authToken]);
+      // 1. Add this user to our list of mentioned users for this reply.
+      setMentionedUsers([{ username, fullName }]);
 
-  // const handleReplyClick = () => setIsReplying(!isReplying);
-  const handleReplyClick = () => {
-    // Jab reply box khule, author ka full name pre-fill ho jaye
-    if (!isReplying) {
-      setReplyText(`@${comment.author_full_name} `);
+      // 2. Clear the editor to start fresh.
+      editorRef.current.innerHTML = '';
+
+      // 3. Create a proper mention <span>, just like in insertMention()
+      const span = document.createElement("span");
+      span.textContent = `@${fullName}`;
+      span.style.color = "#2563eb"; // Blue color
+      span.style.fontWeight = "500";
+      span.setAttribute("data-mention", "true");
+      span.setAttribute("data-username", username);
+      span.setAttribute("data-fullname", fullName);
+
+      // 4. Insert the new span into the editor.
+      editorRef.current.appendChild(span);
+
+      // 5. Add a space after the mention for a better typing experience.
+      const space = document.createTextNode("\u00A0"); // Non-breaking space
+      editorRef.current.appendChild(space);
+
+      // 6. Focus the editor and move the cursor to the very end.
+      editorRef.current.focus();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(editorRef.current);
+      range.collapse(false); // Move to the end
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else if (!isReplying) {
+      // Optional: Clear mentioned users when the reply box is closed.
+      setMentionedUsers([]);
     }
-    setIsReplying(!isReplying);
-  };
+  }, [isReplying, comment.author_username, comment.author_full_name]);
 
-  const handleReplySubmit = async (e) => {
-    e.preventDefault();
-    if (!replyText.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      const newReply = await onReply?.(comment.slug, replyText);
-      setReplyText("");
-      setIsReplying(false);
-
-      if (newReply) {
-        setReplies(prev => [...prev, newReply]);
-      }
-
-      // Show replies after successful reply
-      setShowReplies(true);
-      await fetchReplies();
-    } catch (error) {
-      console.error("Failed to submit reply:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const fetchReplies = async () => {
     if (!authToken || !comment.slug) return;
@@ -261,6 +273,149 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
     }
   }, [showReplies, comment.slug]);
 
+  // ✅ ADDED: All helper functions for the mention editor
+  const saveCursorPosition = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) setCursorPosition(sel.getRangeAt(0).cloneRange());
+  };
+
+  const restoreCursorPosition = () => {
+    if (cursorPosition) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(cursorPosition);
+    }
+  };
+
+  const getBeforeCursorText = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) return "";
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    const offset = range.startOffset;
+    return textNode.nodeType === Node.TEXT_NODE ? textNode.textContent.slice(0, offset) : "";
+  };
+
+  const handleInput = () => {
+    if (isInsertingMention.current) return;
+    const beforeCursor = getBeforeCursorText();
+    const match = beforeCursor.match(/@([\w\s]*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+      saveCursorPosition();
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+
+  const insertMention = (username, fullName) => {
+    setMentionedUsers(prev => {
+      if (!prev.some(user => user.username === username)) {
+        return [...prev, { username, fullName }];
+      }
+      return prev;
+    });
+
+    isInsertingMention.current = true;
+    restoreCursorPosition();
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) {
+      isInsertingMention.current = false;
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    if (textNode.nodeType === Node.TEXT_NODE) {
+      const atIndex = textNode.textContent.slice(0, range.startOffset).lastIndexOf('@');
+      if (atIndex !== -1) {
+        range.setStart(textNode, atIndex);
+        range.deleteContents();
+      }
+    }
+
+    const span = document.createElement("span");
+    span.textContent = `@${fullName}`;
+    span.style.color = "#2563eb";
+    span.style.fontWeight = "500";
+    span.setAttribute("data-mention", "true");
+    span.setAttribute("data-username", username);
+    span.setAttribute("data-fullname", fullName);
+    range.insertNode(span);
+
+    const space = document.createTextNode("\u00A0");
+    range.setStartAfter(span);
+    range.collapse(true);
+    range.insertNode(space);
+    range.setStartAfter(space);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    setShowDropdown(false);
+    setMentionQuery("");
+    editorRef.current.focus();
+
+    setTimeout(() => { isInsertingMention.current = false; }, 10);
+  };
+
+  const getContentForBackend = () => {
+    if (!editorRef.current) return "";
+    let contentString = "";
+    editorRef.current.childNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        contentString += node.textContent;
+      } else if (node.nodeType === Node.ELEMENT_NODE && node.getAttribute('data-mention') === 'true') {
+        contentString += `@${node.getAttribute('data-username')}`;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        contentString += node.textContent;
+      }
+    });
+    return contentString.replace(/\u00A0/g, ' ');
+  };
+
+  // ✅ ADDED: useEffect for searching users to mention
+  useEffect(() => {
+    if (mentionQuery === "") {
+      setShowDropdown(false);
+      return;
+    }
+    const delay = setTimeout(async () => {
+      try {
+        const results = await apiClient.get(`/api/posts-app/users/search/?search=${mentionQuery}`);
+        setMentionResults(results);
+        setShowDropdown(results.length > 0);
+      } catch (err) {
+        console.error("Mention search failed:", err);
+      }
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [mentionQuery]);
+
+  // 🔄 MODIFIED: Reply submission now uses the new editor
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    const replyContent = getContentForBackend();
+    if (!replyContent.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await onReply?.(comment.slug, replyContent, mentionedUsers);
+
+      if (editorRef.current) editorRef.current.innerHTML = "";
+      setMentionedUsers([]);
+      setIsReplying(false);
+
+      await fetchReplies();
+      setShowReplies(true);
+    } catch (error) {
+      console.error("Failed to submit reply:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const repliesSection = showReplies && (
     <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
       {isLoadingReplies ? (
@@ -354,6 +509,8 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
                 <div className="text-xs text-gray-600 mb-2">{comment.author_headline}</div>
               )}
 
+
+
               {isEditing ? (
                 <div className="flex gap-2 items-center">
                   <Input
@@ -385,8 +542,16 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
                   </Button>
                 </div>
               ) : (
-                <div className="text-sm text-gray-800 leading-relaxed">{comment.content}</div>
+                <RenderContentWithMentions
+                  content={comment.content}
+                  mentions={comment.mentions}
+                  onMentionClick={(username) => {
+                    setSelectedUsername(username);
+                    setOpenProfile(true);
+                  }}
+                />
               )}
+
             </div>
 
             <div className="flex items-center gap-4 mt-2 ml-1">
@@ -406,7 +571,7 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
               {depth <= 2 && (
                 <button
                   className="text-xs text-gray-600 hover:text-blue-600 font-medium flex items-center gap-1"
-                  onClick={handleReplyClick}
+                  onClick={() => setIsReplying(prev => !prev)}
                 >
                   <Reply size={12} />
                   Reply
@@ -438,41 +603,63 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
 
         {/* Reply form - only show for main comments and first-level replies */}
         {isReplying && (
-          <div className="flex gap-3 items-start ml-11 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex gap-3 items-start ml-11 mt-2 animate-in slide-in-from-top-2 duration-200">
             <Avatar className="h-8 w-8">
               <AvatarImage src={currentUserAvatar} />
               <AvatarFallback className="text-xs bg-green-500 text-white">
                 {getInitials(currentUser?.full_name || currentUser?.username)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 flex gap-2">
-              <Input
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={`Reply to ${comment.author_full_name || comment.author_username || "user"}...`}
-                className="flex-1 h-9 rounded-full bg-gray-100 border-none text-sm"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+            <div className="flex-1">
+              <div className="relative">
+                <div
+                  ref={editorRef}
+                  contentEditable={true}
+                  onInput={handleInput}
+                  className="min-h-[36px] w-full rounded-2xl bg-gray-100 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:text-gray-500 empty:before:content-[attr(data-placeholder)] whitespace-pre-wrap"
+                  data-placeholder={`Reply to ${comment.author_full_name}...`}
+                  onPaste={(e) => {
                     e.preventDefault();
-                    handleReplySubmit(e);
-                  }
-                }}
-                disabled={isSubmitting}
-              />
-              <Button
-                onClick={handleReplySubmit}
-                size="sm"
-                className="h-9 px-3 rounded-full"
-                disabled={!replyText.trim() || isSubmitting}
-              >
-                <Send size={14} />
-              </Button>
+                    const text = e.clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                  }}
+                ></div>
+                {showDropdown && (
+                  <div ref={dropdownRef} className="absolute bg-white border rounded-lg shadow-lg mt-1 w-64 max-h-48 overflow-y-auto z-50">
+                    {mentionResults.map((u) => (
+                      <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          insertMention(u.username, u.full_name);
+                        }}>
+                        <Avatar className="h-6 w-6"><AvatarImage src={u.avatar_url} /><AvatarFallback className="text-xs">{getInitials(u.full_name)}</AvatarFallback></Avatar>
+                        <div>
+                          <p className="text-xs text-gray-500">{u.full_name}</p>
+                          <p className="text-sm font-medium">{u.username}</p>
+
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <Button onClick={() => setIsReplying(false)} variant="ghost" size="sm">Cancel</Button>
+                <Button onClick={handleReplySubmit} size="sm" disabled={isSubmitting}>
+                  {isSubmitting ? "Replying..." : "Reply"}
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Show replies at any depth when showReplies is true */}
         {repliesSection}
+        <SearchProfile
+          open={openProfile}
+          onOpenChange={setOpenProfile}
+          username={selectedUsername}
+        />
       </div>
     </div>
   );
@@ -483,35 +670,72 @@ function Comment({ comment, onReply, onDelete, depth = 0, authToken, currentUser
 // ------------------ Content with Mentions ------------------
 
 
+
+
 function RenderContentWithMentions({ content, mentions, onMentionClick }) {
+  if (!content) return null;
+
+  // If no mentions, just return plain text
   if (!mentions || mentions.length === 0) {
     return <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap">{content}</p>;
   }
 
-  let parts = content.split(/(\s+)/); // split by spaces to preserve text spacing
+  // Create a regex to match @username patterns
+  const mentionRegex = /@(\w[\w.-]*)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  // Find all matches and split the content
+  while ((match = mentionRegex.exec(content)) !== null) {
+    // Add the text before the mention
+    if (match.index > lastIndex) {
+      parts.push({
+        type: 'text',
+        content: content.slice(lastIndex, match.index)
+      });
+    }
+
+    // Add the mention
+    const username = match[1];
+    const mentionData = mentions.find(m => m.username === username);
+    const fullName = mentionData?.full_name || username;
+    parts.push({
+      type: 'mention',
+      username: username,
+      fullName: fullName
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add any remaining text after the last mention
+  if (lastIndex < content.length) {
+    parts.push({
+      type: 'text',
+      content: content.slice(lastIndex)
+    });
+  }
 
   return (
     <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap">
-      {parts.map((part, i) => {
-        const mention = mentions.find(m => part === `@${m.username}`);
-        if (mention) {
+      {parts.map((part, index) => {
+        if (part.type === 'mention') {
           return (
             <span
-              key={i}
-              onClick={() => onMentionClick(mention.username)}
+              key={index}
+              onClick={() => onMentionClick(part.username)}
               className="text-blue-600 font-medium cursor-pointer hover:underline"
             >
-              {mention.full_name || `@${mention.username}`}
+              {part.fullName}
             </span>
           );
         }
-        return part;
+        return <span key={index}>{part.content}</span>;
       })}
     </p>
   );
 }
-
-
 
 
 
@@ -794,8 +1018,8 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
   const [commentCount, setCommentCount] = useState(comment_count || 0);
   const [isLiked, setIsLiked] = useState(is_liked_by_user || false);
 
-  const [newComment, setNewComment] = useState("");
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  // const [newComment, setNewComment] = useState("");
+
   const [comments, setComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
 
@@ -808,6 +1032,131 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [mainMentionQuery, setMainMentionQuery] = useState("");
+  const [mainMentionResults, setMainMentionResults] = useState([]);
+  const [showMainDropdown, setShowMainDropdown] = useState(false);
+  const [mainMentionedUsers, setMainMentionedUsers] = useState([]);
+  const [cursorPosition, setCursorPosition] = useState(null);
+  const mainCommentEditorRef = useRef(null);
+  const mainCommentDropdownRef = useRef(null);
+  const isInsertingMainMention = useRef(false);
+
+  const mainSaveCursorPosition = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      setCursorPosition(sel.getRangeAt(0).cloneRange());
+    }
+  };
+  const mainRestoreCursorPosition = () => {
+    if (cursorPosition) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(cursorPosition);
+    }
+  };
+  const mainGetBeforeCursorText = () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) return "";
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    const offset = range.startOffset;
+    if (textNode.nodeType === Node.TEXT_NODE) {
+      return textNode.textContent.slice(0, offset);
+    }
+    return "";
+  };
+
+  const mainHandleInput = () => {
+    if (isInsertingMainMention.current) return;
+    const beforeCursor = mainGetBeforeCursorText();
+    const match = beforeCursor.match(/@([\w\s]*)$/);
+    if (match) {
+      setMainMentionQuery(match[1]);
+      mainSaveCursorPosition();
+    } else {
+      setShowMainDropdown(false);
+    }
+  };
+  const mainInsertMention = (username, fullName) => {
+    setMainMentionedUsers(prev => {
+      if (!prev.some(user => user.username === username)) {
+        return [...prev, { username, fullName }];
+      }
+      return prev;
+    });
+
+    isInsertingMainMention.current = true;
+    mainRestoreCursorPosition();
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) {
+      isInsertingMainMention.current = false;
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    if (textNode.nodeType === Node.TEXT_NODE) {
+      const atIndex = textNode.textContent.slice(0, range.startOffset).lastIndexOf('@');
+      if (atIndex !== -1) {
+        range.setStart(textNode, atIndex);
+        range.deleteContents();
+      }
+    }
+
+    const span = document.createElement("span");
+    span.textContent = `@${fullName}`;
+    span.style.color = "#2563eb";
+    span.style.fontWeight = "500";
+    span.setAttribute("data-mention", "true");
+    span.setAttribute("data-username", username);
+    span.setAttribute("data-fullname", fullName);
+    range.insertNode(span);
+
+    const space = document.createTextNode("\u00A0");
+    range.setStartAfter(span);
+    range.collapse(true);
+    range.insertNode(space);
+    range.setStartAfter(space);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    setShowMainDropdown(false);
+    setMainMentionQuery("");
+    mainCommentEditorRef.current.focus();
+
+    setTimeout(() => { isInsertingMainMention.current = false; }, 10);
+  };
+
+  const getMainCommentContentForBackend = () => {
+    if (!mainCommentEditorRef.current) return "";
+    let contentString = "";
+    mainCommentEditorRef.current.childNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        contentString += node.textContent;
+      } else if (node.nodeType === Node.ELEMENT_NODE && node.getAttribute('data-mention') === 'true') {
+        contentString += `@${node.getAttribute('data-username')}`;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        contentString += node.textContent;
+      }
+    });
+    return contentString.replace(/\u00A0/g, ' ');
+  };
+
+
+  useEffect(() => {
+    if (mainMentionQuery === "") { setShowMainDropdown(false); return; }
+    const delay = setTimeout(async () => {
+      try {
+        const results = await apiClient.get(`/api/posts-app/users/search/?search=${mainMentionQuery}`);
+        setMainMentionResults(results);
+        setShowMainDropdown(results.length > 0);
+      } catch (err) { console.error("Main mention search failed:", err); }
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [mainMentionQuery])
 
 
   useEffect(() => {
@@ -905,45 +1254,103 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
     }
   };
 
+  // const handleCommentSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!newComment.trim()) return;
+  //   if (!authToken) return alert("Please log in to comment.");
+  //   setIsSubmittingComment(true);
+
+  //   try {
+  //     const res = await fetch(`${API_BASE_URL}/api/posts-app/${slug}/comments/`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ content: newComment }),
+  //     });
+  //     if (res.ok) {
+  //       setNewComment("");
+  //       setCommentCount((c) => c + 1);
+  //       fetchComments();
+  //     } else {
+  //       alert("Failed to post comment.");
+  //     }
+  //   } catch {
+  //     alert("Error posting comment.");
+  //   } finally {
+  //     setIsSubmittingComment(false);
+  //   }
+  // };
+
+
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    if (!authToken) return alert("Please log in to comment.");
+    const commentContent = getMainCommentContentForBackend();
+    if (!commentContent.trim() || isSubmittingComment) return;
     setIsSubmittingComment(true);
-
+    const mentionedUsernames = mainMentionedUsers.map(user => user.username);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/posts-app/${slug}/comments/`, {
+      await fetch(`${API_BASE_URL}/api/posts-app/${post.slug}/comments/`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: newComment }),
+        headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: commentContent, mentions: mentionedUsernames }),
       });
-      if (res.ok) {
-        setNewComment("");
-        setCommentCount((c) => c + 1);
-        fetchComments();
-      } else {
-        alert("Failed to post comment.");
-      }
-    } catch {
+      if (mainCommentEditorRef.current) mainCommentEditorRef.current.innerHTML = "";
+      setMainMentionedUsers([]);
+      setCommentCount(c => c + 1);
+      fetchComments();
+    } catch (err) {
       alert("Error posting comment.");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  const handleReply = async (commentSlug, replyContent) => {
+
+  // const handleReply = async (commentSlug, replyContent) => {
+  //   if (!authToken) return alert("Please log in to reply.");
+  //   try {
+  //     const response = await fetch(`${API_BASE_URL}/api/posts-app/comments/${commentSlug}/replies/`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ content: replyContent }),
+  //     });
+
+  //     if (response.ok) {
+  //       // Update comment count and refresh comments
+  //       setCommentCount(prev => prev + 1);
+  //       await fetchComments();
+  //     } else {
+  //       throw new Error("Failed to post reply");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error posting reply:", error);
+  //     alert("Failed to post reply.");
+  //     throw error;
+  //   }
+  // };
+  const handleReply = async (commentSlug, replyContent, mentionedUsers) => {
     if (!authToken) return alert("Please log in to reply.");
+
+    // ✅ Get just the usernames from the mentionedUsers array
+    const mentionedUsernames = mentionedUsers.map(user => user.username);
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/posts-app/comments/${commentSlug}/replies/`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: replyContent }),
+        // ✅ Add the 'mentions' array to the request body
+        body: JSON.stringify({
+          content: replyContent,
+          mentions: mentionedUsernames
+        }),
       });
 
       if (response.ok) {
@@ -956,30 +1363,60 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
     } catch (error) {
       console.error("Error posting reply:", error);
       alert("Failed to post reply.");
-      throw error;
     }
   };
 
-  const handleShare = async () => {
-    setIsSharing(true);
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: title || `Post by ${author_full_name || author_username}`,
-          text: content,
-          url: window.location.href
-        });
-      } else {
-        // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(window.location.href);
-        alert("Link copied to clipboard!");
-      }
-    } catch (error) {
-      console.error("Error sharing:", error);
-    } finally {
-      setIsSharing(false);
+
+
+  // const handleShare = async () => {
+  //   setIsSharing(true);
+  //   try {
+  //     if (navigator.share) {
+  //       await navigator.share({
+  //         title: title || `Post by ${author_full_name || author_username}`,
+  //         text: content,
+  //         url: window.location.href
+  //       });
+  //     } else {
+  //       // Fallback: copy to clipboard
+  //       await navigator.clipboard.writeText(window.location.href);
+  //       alert("Link copied to clipboard!");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error sharing:", error);
+  //   } finally {
+  //     setIsSharing(false);
+  //   }
+  // };
+
+
+// PostCard.js ke andar
+
+const handleShare = async () => {
+  // ✅ Step 1: Post ke slug se naya, shareable URL banayein
+  const postUrl = `${window.location.origin}/posts/${slug}`;
+
+  setIsSharing(true);
+  try {
+    // Check agar browser `navigator.share` support karta hai (mobile pe aam taur par)
+    if (navigator.share) {
+      await navigator.share({
+        title: title || `Post by ${author_full_name || author_username}`,
+        text: "Check out this post!",
+        url: postUrl // ✅ Naya URL yahan use karein
+      });
+    } else {
+      // Fallback: Agar `navigator.share` nahi hai, to link ko clipboard pe copy karein
+      await navigator.clipboard.writeText(postUrl); // ✅ Naya URL yahan bhi use karein
+      alert("Post link copied to clipboard!");
     }
-  };
+  } catch (error) {
+    console.error("Error sharing:", error);
+    // Agar user share cancel karta hai to error aa sakta hai, isliye alert na dikhayein
+  } finally {
+    setIsSharing(false);
+  }
+};
 
   const handleDelete = async () => {
     // Show a confirmation dialog before deleting
@@ -1156,8 +1593,8 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
               onClick={toggleLike}
               disabled={isLikeStatusLoading}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ${isLiked
-                  ? "text-red-500 bg-red-50 hover:bg-red-100"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-red-500"
+                ? "text-red-500 bg-red-50 hover:bg-red-100"
+                : "text-gray-600 hover:bg-gray-100 hover:text-red-500"
                 } ${isLikeStatusLoading ? "cursor-not-allowed opacity-50" : ""
                 }`}
             >
@@ -1197,32 +1634,34 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
       {/* Comments Section */}
       {showComments && (
         <div className="border-t border-gray-100 bg-gray-50 animate-in slide-in-from-top-2 duration-300">
-          {/* Add Comment */}
+          {/* --- ADD COMMENT SECTION (Compact style like old one) --- */}
           <div className="p-4 bg-white border-b border-gray-100">
-            <div className="flex gap-3 items-start">
+            <div className="flex gap-3 items-center">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={currentUserAvatar || 'U'} />
                 <AvatarFallback className="text-xs bg-green-500 text-white">
                   {getInitials(currentUser?.full_name || currentUser?.username)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 flex gap-2">
-                <Input
-                  placeholder="Add a thoughtful comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  disabled={isSubmittingComment}
-                  className="flex-1 h-10 rounded-full bg-gray-100 border-none text-sm placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleCommentSubmit(e);
-                    }
+
+              <div className="flex-1 flex gap-2 items-center">
+                {/* ✅ contentEditable with same UI as Input */}
+                <div
+                  ref={mainCommentEditorRef}
+                  contentEditable={!!currentUser}
+                  onInput={mainHandleInput}
+                  className="flex-1 min-h-[40px] max-h-24 overflow-y-auto rounded-full bg-gray-100 px-4 py-2 text-sm placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap"
+                  data-placeholder="Add a thoughtful comment..."
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData.getData("text/plain");
+                    document.execCommand("insertText", false, text);
                   }}
-                />
+                ></div>
+
                 <Button
                   onClick={handleCommentSubmit}
-                  disabled={!newComment.trim() || isSubmittingComment}
+                  disabled={isSubmittingComment}
                   size="sm"
                   className="h-10 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
@@ -1230,9 +1669,39 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
                 </Button>
               </div>
             </div>
+
+            {/* ✅ Mention dropdown (positioned below input) */}
+            {showMainDropdown && (
+              <div
+                ref={mainCommentDropdownRef}
+                className="absolute bg-white border rounded-lg shadow-lg mt-1 ml-12 w-64 max-h-48 overflow-y-auto z-50"
+              >
+                {mainMentionResults.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      mainInsertMention(u.username, u.full_name);
+                    }}
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={u.avatar_url} />
+                      <AvatarFallback className="text-xs">
+                        {getInitials(u.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{u.full_name}</p>
+                      <p className="text-xs text-gray-500">@{u.username}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Comments List */}
+          {/* --- COMMENTS LIST (unchanged) --- */}
           <div className="max-h-96 overflow-y-auto custom-scrollbar">
             <div className="p-4 space-y-4">
               {comments.length > 0 ? (
@@ -1249,14 +1718,20 @@ export default function PostCard({ post, currentUser, currentUserAvatar, onPostU
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <MessageCircle size={48} className="mx-auto text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500">No comments yet. Be the first to share your thoughts!</p>
+                  <MessageCircle
+                    size={48}
+                    className="mx-auto text-gray-300 mb-3"
+                  />
+                  <p className="text-sm text-gray-500">
+                    No comments yet. Be the first to share your thoughts!
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
+
 
 
       <EditPostModal

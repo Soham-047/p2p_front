@@ -396,31 +396,92 @@ export default function EditPostModal({ open, onOpenChange, post, onPostUpdated 
     };
 
     // File upload logic remains the same...
+    // const handleFileUpload = async (acceptType) => {
+    //     const input = document.createElement('input');
+    //     input.type = 'file';
+    //     input.accept = acceptType;
+    //     input.multiple = true;
+    //     input.onchange = (e) => {
+    //         const files = Array.from(e.target.files);
+    //         if (!files.length) return;
+    //         files.forEach(async (file) => {
+    //             const tempId = Date.now() + Math.random();
+    //             const media_type = file.type.startsWith("video") ? "video" : "image";
+    //             setMediaItems((prev) => [...prev, { id: tempId, url: "", media_type, progress: 0 }]);
+    //             try {
+    //                 const url = await uploadToCloudinary(file, (percent) => {
+    //                     setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, progress: percent } : m));
+    //                 });
+    //                 setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, url, progress: 100 } : m));
+    //             } catch (err) {
+    //                 alert("Upload failed: " + err.message);
+    //                 setMediaItems((prev) => prev.filter((m) => m.id !== tempId));
+    //             }
+    //         });
+    //     };
+    //     input.click();
+    // };
     const handleFileUpload = async (acceptType) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = acceptType;
-        input.multiple = true;
-        input.onchange = (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-            files.forEach(async (file) => {
-                const tempId = Date.now() + Math.random();
-                const media_type = file.type.startsWith("video") ? "video" : "image";
-                setMediaItems((prev) => [...prev, { id: tempId, url: "", media_type, progress: 0 }]);
-                try {
-                    const url = await uploadToCloudinary(file, (percent) => {
-                        setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, progress: percent } : m));
-                    });
-                    setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, url, progress: 100 } : m));
-                } catch (err) {
-                    alert("Upload failed: " + err.message);
-                    setMediaItems((prev) => prev.filter((m) => m.id !== tempId));
-                }
-            });
-        };
-        input.click();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = acceptType;
+    input.multiple = true;
+
+    input.onchange = (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        // --- ✅ 1. CHECK TOTAL ITEM LIMIT ---
+        const MAX_TOTAL_ITEMS = 6;
+        if (mediaItems.length + files.length > MAX_TOTAL_ITEMS) {
+            alert(`You can only upload a maximum of ${MAX_TOTAL_ITEMS} photos and videos in total.`);
+            return; // Stop the function
+        }
+
+        // --- ✅ 2. CHECK VIDEO FILE SIZE ---
+        const MAX_VIDEO_SIZE_MB = 10;
+        const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+        
+        const validFiles = [];
+        const oversizedFiles = [];
+
+        // Separate valid files from oversized ones
+        for (const file of files) {
+            if (file.type.startsWith("video") && file.size > MAX_VIDEO_SIZE_BYTES) {
+                oversizedFiles.push(file.name);
+            } else {
+                validFiles.push(file);
+            }
+        }
+
+        // --- ✅ 3. SHOW ERROR FOR LARGE VIDEOS ---
+        if (oversizedFiles.length > 0) {
+            alert(`The following videos are larger than ${MAX_VIDEO_SIZE_MB}MB and will not be uploaded:\n- ${oversizedFiles.join("\n- ")}`);
+        }
+
+        if (!validFiles.length) return;
+
+        // --- ✅ 4. UPLOAD ONLY THE VALID FILES ---
+        validFiles.forEach(async (file) => {
+            const tempId = Date.now() + Math.random();
+            const media_type = file.type.startsWith("video") ? "video" : "image";
+            
+            setMediaItems((prev) => [...prev, { id: tempId, url: "", media_type, progress: 0 }]);
+            
+            try {
+                const url = await uploadToCloudinary(file, (percent) => {
+                    setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, progress: percent } : m));
+                });
+                setMediaItems((prev) => prev.map((m) => m.id === tempId ? { ...m, url, progress: 100 } : m));
+            } catch (err) {
+                alert("Upload failed: " + err.message);
+                setMediaItems((prev) => prev.filter((m) => m.id !== tempId));
+            }
+        });
     };
+
+    input.click();
+};
 
     // 🔄 MODIFIED: handleSave to use the new content format
     const handleSave = async () => {
@@ -467,25 +528,24 @@ export default function EditPostModal({ open, onOpenChange, post, onPostUpdated 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] bg-white">
-                <DialogHeader>
+            <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col bg-white ">
+                <DialogHeader className={"flex-shrink-0 px-6 pt-6"}>
                     <DialogTitle>Edit Post</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="space-y-1">
+                <div className=" flex-1 overflow-y-auto  custom-scrollbar">
+                    <div className="space-y-6">
                         <label htmlFor="title">Title</label>
-                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="" />
                     </div>
 
                     {/* 🔄 MODIFIED: Replaced Textarea with contentEditable div */}
-                    <div className="space-y-1 relative">
+                    <div className="space-y-6">
                         <label>Content</label>
                         <div
                             ref={editorRef}
                             contentEditable={true}
                             onInput={handleInput}
-                            className="min-h-[120px] max-h-48 w-full rounded-md border border-gray-200 p-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:pointer-events-none empty:before:text-gray-500 empty:before:content-[attr(data-placeholder)] whitespace-pre-wrap break-words break-all overflow-y-auto"
-                            data-placeholder="What's on your mind? Use @ to mention someone"
+className="min-h-[120px] max-h-48 w-full rounded-md border-2 border-black p-2 text-sm focus:outline-none break-words overflow-y-auto"                            data-placeholder="What's on your mind? Use @ to mention someone"
                             onPaste={(e) => {
                                 e.preventDefault();
                                 const text = e.clipboardData.getData('text/plain');
@@ -506,7 +566,7 @@ export default function EditPostModal({ open, onOpenChange, post, onPostUpdated 
                                             <AvatarFallback className="text-xs">{getInitials(u.full_name)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="text-sm font-medium">@{u.username}</p>
+                                            {/* <p className="text-sm font-medium">@{u.username}</p> */}
                                             <p className="text-xs text-gray-500">{u.full_name}</p>
                                         </div>
                                     </div>
@@ -547,7 +607,7 @@ export default function EditPostModal({ open, onOpenChange, post, onPostUpdated 
                     </div>
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="flex-shrink-0 px-6 pb-6 border-t pt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button onClick={handleSave} disabled={isSubmitting}>
                         {isSubmitting ? "Saving..." : "Save Changes"}
