@@ -4,8 +4,13 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import CertificateDialog from "./CertificateForm";
 
-export default function AchievementsSection({ certificates: initialCertificates = [], profile, onProfileUpdate }) {
+export default function AchievementsSection({
+  certificates: initialCertificates = [],
+  profile,
+  onProfileUpdate,
+}) {
   const [certificates, setCertificates] = useState(initialCertificates);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     setCertificates(initialCertificates);
@@ -31,6 +36,9 @@ export default function AchievementsSection({ certificates: initialCertificates 
     }
   };
 
+  // limit to 2 unless showAll
+  const visibleCertificates = showAll ? certificates : certificates.slice(0, 2);
+
   return (
     <div className="bg-white p-6 rounded-xl shadow">
       <div className="flex justify-between items-center mb-4">
@@ -44,7 +52,7 @@ export default function AchievementsSection({ certificates: initialCertificates 
 
       {certificates?.length === 0 && <p>No certificates.</p>}
       <ul className="space-y-3">
-        {certificates?.map((c) => (
+        {visibleCertificates.map((c) => (
           <li
             key={c.id}
             className="hover:shadow-md border border-gray-200 p-4 rounded-lg flex justify-between items-center"
@@ -84,6 +92,19 @@ export default function AchievementsSection({ certificates: initialCertificates 
           </li>
         ))}
       </ul>
+
+      {certificates.length > 2 && (
+        <div className="mt-3 ">
+          <button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAll(!showAll)}
+            className="text-blue-600 font-semibold w-full justify-center"
+          >
+            {showAll ? "Show Less" : "View More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -167,12 +167,12 @@ export default function ExperienceForm({ exp, onClose, onSave }) {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex flex-row justify-between mt-4">
+            <Button type="button"  onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : isEdit ? "Update" : "Add Experience"}
+              {loading ? "Saving..." : isEdit ? "Save" : "Save"}
             </Button>
           </DialogFooter>
         </form>

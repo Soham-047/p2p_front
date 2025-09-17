@@ -168,7 +168,7 @@ export default function EducationDialog({ education, onSaved,}) {
         
 
           <div className="flex justify-between w-full">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button type="button"  onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
             <Button type="button" onClick={handleSave} disabled={loading}>
