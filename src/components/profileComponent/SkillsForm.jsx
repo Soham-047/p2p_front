@@ -129,7 +129,7 @@ export default function SkillDialog({ skill, onSaved, children }) {
         {/* Footer */}
         <div className="flex justify-end gap-2 mt-4">
           <Button
-            variant="outline"
+           
             onClick={() => setOpen(false)}
             disabled={loading}
           >

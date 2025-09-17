@@ -11,6 +11,7 @@ export default function AuthForm() {
 
   // Form data states
   const [collegeEmail, setCollegeEmail] = useState("");
+  const [full_name, setFull_name] = useState("");
   const [batch, setBatch] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +26,7 @@ export default function AuthForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            full_name: full_name,
             college_email: collegeEmail,
             batch: batch,
             is_current_student: true,
@@ -133,6 +135,15 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
           >
             {mode === "signup" ? (
               <>
+
+               <Input
+                  className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500"
+                  type="text"
+                  placeholder="Enter your Name"
+                  value={full_name}
+                  onChange={(e) => setFull_name(e.target.value)}
+                  required
+                />
                 <Input
                   className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500"
                   type="email"
@@ -141,6 +152,7 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
                   onChange={(e) => setCollegeEmail(e.target.value)}
                   required
                 />
+
                 <Input
                   className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500"
                   type="text"

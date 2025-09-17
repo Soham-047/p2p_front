@@ -3,9 +3,11 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+;
 
 export default function CertificateDialog({ children, certificate, onSaved }) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     issuer: "",
@@ -42,6 +44,7 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       let res;
       if (certificate?.id) {
         res = await api.patch(
@@ -51,7 +54,8 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
       } else {
         res = await api.post(`/api/users-app/profile/me/certificates/`, form);
       }
-      onSaved(res.data);
+      onSaved(res);
+      setLoading(false);
       setOpen(false);
     } catch (err) {
       console.error("Error saving certificate:", err);
@@ -63,7 +67,13 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
       <Dialog.Trigger asChild>{children}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 bg-white rounded-xl p-6 w-[480px] -translate-x-1/2 -translate-y-1/2 shadow-xl">
+        <Dialog.Content className="
+          fixed top-1/2 left-1/2 bg-white  shadow-xl
+          w-[95%] max-w-[480px] 
+          -translate-x-1/2 -translate-y-1/2
+          sm:rounded-xl sm:p-6
+          rounded-none p-4 sm:w-[480px]
+        ">
           <Dialog.Title className="text-lg font-bold mb-4">
             {certificate ? "Edit Certificate" : "Add Certificate"}
           </Dialog.Title>
@@ -108,15 +118,18 @@ export default function CertificateDialog({ children, certificate, onSaved }) {
               className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
 
-            <div className="flex justify-end pt-4 gap-2">
+            <div className="flex justify-between pt-4 gap-2">
               <Button
-                type="button"
-                variant="outline"
+                type="submit"
+                
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={loading}>
+  {loading ? "Saving..." : "Save"}
+</Button>
+
             </div>
           </form>
         </Dialog.Content>

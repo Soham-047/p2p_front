@@ -4,10 +4,14 @@ import { api } from "@/lib/api";
 import ExperienceForm from "./ExperienceForm";
 import { PenLine, Trash2 } from "lucide-react";
 
-export default function WorkExperience({ experiences = [], profile, onProfileUpdate }) {
+export default function WorkExperience({
+  experiences = [],
+  profile,
+  onProfileUpdate,
+}) {
   const [list, setList] = useState(experiences);
   const [editing, setEditing] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(2); // show 2 by default
+  const [showAll, setShowAll] = useState(false); // ✅ toggle instead of counter
 
   // Sync local state when prop changes
   useEffect(() => {
@@ -15,7 +19,8 @@ export default function WorkExperience({ experiences = [], profile, onProfileUpd
   }, [experiences]);
 
   const remove = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this experience?")) return;
+    if (!window.confirm("Are you sure you want to delete this experience?"))
+      return;
 
     try {
       await api.delete(`/api/users-app/profile/me/experiences/${id}/`);
@@ -48,10 +53,10 @@ export default function WorkExperience({ experiences = [], profile, onProfileUpd
     setEditing(null);
   };
 
-  // Show only up to visibleCount items
- // Show only up to visibleCount items (newest first)
-const displayedList = [...list].reverse().slice(0, visibleCount);
-
+  // ✅ Show 2 unless showAll is true
+  const displayedList = showAll
+    ? [...list].reverse()
+    : [...list].reverse().slice(0, 2);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow">
@@ -83,7 +88,10 @@ const displayedList = [...list].reverse().slice(0, visibleCount);
                   {exp.start_date} - {exp.end_date || "Present"}
                 </p>
                 {exp.description && (
-                  <DescriptionWithToggle text={exp.description} wordLimit={40} />
+                  <DescriptionWithToggle
+                    text={exp.description}
+                    wordLimit={40}
+                  />
                 )}
               </div>
 
@@ -113,31 +121,25 @@ const displayedList = [...list].reverse().slice(0, visibleCount);
         ))}
       </div>
 
-      {/* View More / Less toggle */}
+      {/* ✅ View All / Less toggle */}
       {list.length > 2 && (
         <div className="mt-4 text-center">
-          {visibleCount < list.length ? (
-            <button
-              type="button"
-              className="text-blue-600 hover:underline text-sm"
-              onClick={() => setVisibleCount((prev) => prev + 2)} // show 2 more
-            >
-              View More
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="text-blue-600 hover:underline text-sm"
-              onClick={() => setVisibleCount(2)} // collapse back to 2
-            >
-              View Less
-            </button>
-          )}
+          <button
+            type="button"
+            className="text-blue-600 font-semibold test-md"
+            onClick={() => setShowAll(!showAll)}
+          >
+            {showAll ? "Show Less" : "View More"}
+          </button>
         </div>
       )}
 
       {editing !== null && (
-        <ExperienceForm exp={editing} onClose={handleClose} onSave={handleSave} />
+        <ExperienceForm
+          exp={editing}
+          onClose={handleClose}
+          onSave={handleSave}
+        />
       )}
     </div>
   );

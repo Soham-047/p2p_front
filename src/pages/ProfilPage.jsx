@@ -51,23 +51,23 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
       {/* Left Content */}
       <div className="flex-1 md:p-6">
         <UserProfilePage />
       </div>
-
+  
       {/* Right Sidebar */}
-      <div className="hidden lg:block w-96 p-1 pt-9">
-
+      <div className="w-full lg:w-96 p-1 pt-9">
         <div className="space-y-6 top-6">
-          <MyPost 
+          <MyPost
             currentUser={currentUser}
-            currentUserAvatar={currentUserAvatar} 
+            currentUserAvatar={currentUserAvatar}
           />
           <SocialLinks />
         </div>
       </div>
     </div>
   );
+  
 }

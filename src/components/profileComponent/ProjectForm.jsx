@@ -59,8 +59,8 @@ export default function ProjectsDialog({ open, setOpen, project, onSaved }) {
           )
         : await api.post(`/api/users-app/profile/me/projects/`, trimmedForm);
 
-      if (res?.data) {
-        onSaved(res.data);
+      if (res) {
+        onSaved(res);
         setForm(initialForm);
         setOpen(false);
       }
@@ -124,10 +124,10 @@ export default function ProjectsDialog({ open, setOpen, project, onSaved }) {
         </div>
 
         <div className="flex gap-2 mt-3 self-end justify-between">
-         <Button variant="outline" onClick={handleClose} className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0" >
+         <Button  onClick={handleClose} className="border-1  border-gray-50 focus-visible:ring-0 focus-visible:ring-offset-0" >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={loading} className="border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0">
+          <Button type="button" onClick={handleSave} disabled={loading} className="border-1  border-gray-50 focus-visible:ring-0 focus-visible:ring-offset-0">
             {loading ? "Saving..." : "Save"}
           </Button>
         </div>

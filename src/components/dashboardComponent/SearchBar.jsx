@@ -13,22 +13,22 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-function formatTimeAgo(dateString) {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const seconds = Math.floor((new Date() - date) / 1000);
-  let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + "y ago";
-  interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + "mo ago";
-  interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + "d ago";
-  interval = seconds / 3600;
-  if (interval > 1) return Math.floor(interval) + "h ago";
-  interval = seconds / 60;
-  if (interval > 1) return Math.floor(interval) + "m ago";
-  return Math.floor(seconds) + "s ago";
-}
+// function formatTimeAgo(dateString) {
+//   if (!dateString) return "";
+//   const date = new Date(dateString);
+//   const seconds = Math.floor((new Date() - date) / 1000);
+//   let interval = seconds / 31536000;
+//   if (interval > 1) return Math.floor(interval) + "y ago";
+//   interval = seconds / 2592000;
+//   if (interval > 1) return Math.floor(interval) + "mo ago";
+//   interval = seconds / 86400;
+//   if (interval > 1) return Math.floor(interval) + "d ago";
+//   interval = seconds / 3600;
+//   if (interval > 1) return Math.floor(interval) + "h ago";
+//   interval = seconds / 60;
+//   if (interval > 1) return Math.floor(interval) + "m ago";
+//   return Math.floor(seconds) + "s ago";
+// }
 
 
 const SearchBar = ({ onMessageClick }) => {

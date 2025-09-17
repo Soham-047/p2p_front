@@ -49,43 +49,74 @@ export default function ProfileHeader({ profile, onProfileUpdate }) {
 
       {/* Info + Buttons */}
       <div className="pt-20 px-6 pb-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
-          {/* Profile Info */}
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-900">{profile.full_name}</h2>
-            <p className="text-blue-600 font-medium">{profile.headline}</p>
-            {profile.location && (
-              <p className="text-sm text-gray-600 flex items-center gap-1">
-                <MapPin size={14} />
-                {profile.location}
-              </p>
-            )}
-          </div>
+  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
+    {/* Profile Info + Edit (mobile) */}
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">{profile.full_name}</h2>
 
-          {/* Buttons (now outside banner, right-aligned) */}
-          <div className=" sm:mt-0 flex gap-2 mb-5">
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className='rounded-full border-1 border-gray-400'>    <Edit size={18} />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-white">
-                <DialogHeader>
-                  <DialogTitle>Edit Profile</DialogTitle>
-                </DialogHeader>
-                <EditProfileForm
-                  profile={profile}
-                  onClose={() => setOpen(false)}
-                  onProfileUpdate={onProfileUpdate}
-                />
-              </DialogContent>
-            </Dialog>
-            <Button className="  bg-gray-100 text-md rounded-full p-4 border border-gray-400">
-              Message
-            </Button>
-          </div>
+        {/* Edit button (mobile only) */}
+        <div className="sm:hidden">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full border border-gray-400 ml-2"
+              >
+                <Edit size={18} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl bg-white">
+              <DialogHeader>
+                <DialogTitle>Edit Profile</DialogTitle>
+              </DialogHeader>
+              <EditProfileForm
+                profile={profile}
+                onClose={() => setOpen(false)}
+                onProfileUpdate={onProfileUpdate}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+
+      <p className="text-blue-600 font-medium">{profile.headline}</p>
+      {profile.location && (
+        <p className="text-sm text-gray-600 flex items-center gap-1">
+          <MapPin size={14} />
+          {profile.location}
+        </p>
+      )}
+    </div>
+
+    {/* Buttons (desktop only, right-aligned) */}
+    <div className="hidden sm:flex gap-2 mb-5">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full border border-gray-400"
+          >
+            <Edit size={18} />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl bg-white">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <EditProfileForm
+            profile={profile}
+            onClose={() => setOpen(false)}
+            onProfileUpdate={onProfileUpdate}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  </div>
+</div>
+
     </div>
   );
 }

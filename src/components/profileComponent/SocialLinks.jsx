@@ -35,11 +35,12 @@ export default function SocialLinks() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editLinks, setEditLinks] = useState({});
-
+  const [isloading, setIsLoading] = useState(false);
   // Fetch links from API
   useEffect(() => {
     async function fetchLinks() {
       try {
+        
         const res = await api.get(`/api/users-app/profile/me/social-links/`);
         const data = res?.results || [];
         const map = {};
@@ -50,6 +51,7 @@ export default function SocialLinks() {
           map[normalized].push({ id: l.id, url: l.url });
         });
         setLinks(map);
+        
       } catch (err) {
         console.error("Failed to fetch social links:", err);
       } finally {
@@ -79,6 +81,7 @@ export default function SocialLinks() {
 
   const handleSaveAll = async () => {
     try {
+      setIsLoading(true);
       for (const platform of platforms) {
         const url = editLinks[platform.name]?.trim();
         const existing = links[platform.name]?.[0];
@@ -114,6 +117,7 @@ export default function SocialLinks() {
           }
         }
       }
+      setIsLoading(false);
       setOpen(false);
     } catch (err) {
       console.error("Failed to save social links:", err);
@@ -159,7 +163,7 @@ export default function SocialLinks() {
 
       {/* Edit Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-white max-w-md">
+        <DialogContent className="bg-white max-w-md w-[95%]">
           <DialogHeader>
             <DialogTitle>Edit Social Links</DialogTitle>
           </DialogHeader>
@@ -178,12 +182,20 @@ export default function SocialLinks() {
             ))}
           </div>
 
-          <DialogFooter className="flex justify-end mt-4 space-x-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveAll}>Save All</Button>
-          </DialogFooter>
+          <DialogFooter className="flex flex-row justify-between mt-4">
+  <div>
+  <button variant="outline" onClick={() => setOpen(false)}>
+    Cancel
+  </button>
+  </div>
+
+  <div>
+  <button onClick={handleSaveAll} disabled={isloading}>
+  {isloading ? "Saving..." : "Save"}
+  </button>
+  </div>
+</DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
