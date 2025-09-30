@@ -153,14 +153,26 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
                   required
                 />
 
-                <Input
-                  className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500"
-                  type="text"
-                  placeholder="Enter your batch"
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  required
-                />
+<select
+  className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500 border  px-3"
+  value={batch}
+  onChange={(e) => setBatch(e.target.value)}
+  required
+>
+  <option value="" disabled >
+    Select your batch
+  </option>
+
+  {Array.from({ length: 2025 - 2017 +1 }, (_, i) => {
+    const start = 2017 + i;
+    const end = start + 4;
+    return (
+      <option key={start} value={`${start}-${end}`}>
+        {start}-{end}
+      </option>
+    );
+  })}
+</select>
               </>
             ) : (
               <>
