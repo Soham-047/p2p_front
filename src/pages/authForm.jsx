@@ -80,7 +80,7 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
           alt="logo"
           className="w-8 h-8"
         />
-        Back Benchers
+        P2P
       </h1>
       <div className="hidden md:block text-2xl text-gray-700">
     {mode === "signup" ? (
@@ -154,16 +154,16 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
                 />
 
 <select
-  className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500 border  px-3"
+  className="w-full rounded-4xl h-12 md:h-15 focus-visible:ring-1 focus-visible:ring-purple-500 border px-3 pr-10 appearance-none"
   value={batch}
   onChange={(e) => setBatch(e.target.value)}
   required
 >
-  <option value="" disabled >
+  <option value="" disabled>
     Select your batch
   </option>
 
-  {Array.from({ length: 2025 - 2017 +1 }, (_, i) => {
+  {Array.from({ length: 2025 - 2017 + 1 }, (_, i) => {
     const start = 2017 + i;
     const end = start + 4;
     return (
@@ -173,6 +173,7 @@ document.cookie = `token=${data.access}; path=/; max-age=${7 * 24 * 60 * 60};  S
     );
   })}
 </select>
+
               </>
             ) : (
               <>
