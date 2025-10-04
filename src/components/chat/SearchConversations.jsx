@@ -38,7 +38,8 @@ export default function SearchConversations({ onSelectUser }) {
         }
 
         const data = await res.json();
-        setResults(data.results || []);
+        setResults(data|| []);
+        
         
       } catch (err) {
         console.error("Error searching users:", err);

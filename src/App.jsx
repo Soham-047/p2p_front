@@ -14,6 +14,8 @@ import AllMyPostsPage from "./pages/AllMyPostsPage";
 import PublicProfilePage from "./pages/PublicProfilePage";
 import TagSearchPage from "./pages/TagSearchPage";
 import SinglePostPage from "./pages/SinglePostPage";
+import Setting from "./pages/setting";
+import Help from "./pages/help";
 // Helper to read cookie by name
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -75,6 +77,39 @@ export default function App() {
           )
         }
       />
+
+<Route
+        path="/settings"
+        element={
+          isLoggedIn ? (
+            <Layout>
+              <div className="p-2 md:p-6 pt-20 md:pt-6 ">
+              <Setting />
+              </div>
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+
+<Route
+        path="/help"
+        element={
+          isLoggedIn ? (
+            <Layout>
+              <div className="p-2 md:p-6 pt-20 md:pt-6 ">
+              <Help/>
+              </div>
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+
 
       {/* Community */}
       <Route
