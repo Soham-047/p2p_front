@@ -16,6 +16,7 @@ import TagSearchPage from "./pages/TagSearchPage";
 import SinglePostPage from "./pages/SinglePostPage";
 import Setting from "./pages/setting";
 import Help from "./pages/help";
+import AuthCallback from "./pages/authCallback";
 // Helper to read cookie by name
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -61,7 +62,10 @@ export default function App() {
       {/* Auth */}
       <Route path="/login" element={<AuthForm />} />
       <Route path="/signup" element={<AuthForm />} />
-
+      <Route
+  path="/accounts/google/login/callback/*"
+  element={<AuthCallback />}
+/>
       {/* Dashboard */}
       <Route
         path="/home"
