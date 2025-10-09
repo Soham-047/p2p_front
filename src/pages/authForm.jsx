@@ -601,7 +601,7 @@ export default function AuthForm() {
                   <Input
                     className="w-full h-12 md:h-15"
                     type="email"
-                    placeholder="Enter your college email"
+                    placeholder="Enter your email"
                     value={collegeEmail}
                     onChange={(e) => setCollegeEmail(e.target.value)}
                     required

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { api } from "@/lib/api";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { Textarea } from "@/components/ui/textarea";
-
+import { useRef } from "react";
 export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
   const [form, setForm] = useState({
     headline: profile.headline || "",
@@ -18,6 +18,7 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
 
   const [loading, setLoading] = useState(false);
  
+  const avatarInputRef = useRef();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,19 +26,24 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
 
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        if (file.size > 1024 * 1024) {
-          alert("File size must be less than 1MB");
-          return;
-        }
-        const url = await uploadToCloudinary(file);
-        setForm((prev) => ({ ...prev, [field]: url }));
-      } catch (err) {
-        console.error("Upload failed:", err);
+    if (!file) return;
+  
+    // Instant preview
+    const previewURL = URL.createObjectURL(file);
+    setForm(prev => ({ ...prev, [field]: previewURL }));
+  
+    try {
+      if (file.size > 1024 * 1024) {
+        alert("File size must be less than 1MB");
+        return;
       }
+      const url = await uploadToCloudinary(file);
+      setForm(prev => ({ ...prev, [field]: url }));
+    } catch (err) {
+      console.error("Upload failed:", err);
     }
   };
+  
 
   const removeImage = (field) => {
     setForm((prev) => ({ ...prev, [field]: "" }));
@@ -127,21 +133,22 @@ export default function EditProfileForm({ profile, onClose, onProfileUpdate }) {
           </div>
 
           <div className="flex flex-col">
-            <input
-              type="file"
-              accept="image/*"
-              id="avatarInput"
-             className=" hidden border-1  border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
-              onChange={(e) => handleFileUpload(e, "avatar_url")}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full px-4 py-1"
-              onClick={() => document.getElementById("avatarInput").click()}
-            >
-              Change Photo
-            </Button>
+           
+<Button
+  type="button"
+  onClick={() => avatarInputRef.current.click()}
+>
+  Change Photo
+</Button>
+
+<input
+  type="file"
+  accept="image/*"
+  ref={avatarInputRef}
+  className="hidden"
+  onChange={(e) => handleFileUpload(e, "avatar_url")}
+/>
+
             <span className="text-xs text-gray-500 mt-1">
               JPG, GIF or PNG. 1MB max.
             </span>
